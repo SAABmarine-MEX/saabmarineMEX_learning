@@ -5,8 +5,8 @@ from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.base_env import ActionTuple
 
 # --- CONFIGURATION ---
-env_prior_path = "envs/res_test_prior_v2/res_prior_v2.x86_64"
-env_real_path = "envs/res_test_real_v2/res_real_v2.x86_64"
+env_prior_path = "envs/res_test_prior_v3/res_prior_v3.x86_64"
+env_real_path = "envs/res_test_real_v3/res_real_v3.x86_64"
 
 n_steps = 10  # Number of steps per episode
 dt = 1 / 50  # Time step (assuming 50Hz simulation)
@@ -29,7 +29,14 @@ action_size = behavior_spec_sim.action_spec.continuous_size  # Expecting 6DOF fo
 
 behavior_name_real = list(env_real.behavior_specs.keys())[0]
 behavior_spec_real = env_real.behavior_specs[behavior_name_real]
-
+print("ENV SIM")
+print("Observation Shapes:", [obs.shape for obs in behavior_spec_sim.observation_specs])
+print("Continuous Action Space:", behavior_spec_sim.action_spec.continuous_size)
+print("Discrete Action Space:", behavior_spec_sim.action_spec.discrete_size)
+print("\nENV REAL")
+print("Observation Shapes:", [obs.shape for obs in behavior_spec_real.observation_specs])
+print("Continuous Action Space:", behavior_spec_real.action_spec.continuous_size)
+print("Discrete Action Space:", behavior_spec_real.action_spec.discrete_size)
 # --- DATA COLLECTION ---
 data_x = []  # Features: [state_diff (12D) + action (6D)]
 data_y = []  # Target: Force rescaling (6D)
@@ -139,42 +146,39 @@ def knn_predict(queries, data_x, data_y, k=n_neigh):
 n=0
 # --- CONTINUOUS PREDICTION LOOP ---
 print("\n Running Continuous KNN Predictions...")
-while n<3:
-    # Simulated batch of test inputs (3 samples per loop iteration)
-    test_pos_mismatch = np.array([
-        [1.2, 0, 0.4, 0, 0, 0],  
-        [0.8, 0, 0.3, 0, 0, 0],  
-        [0.5, 0, 0.2, 0, 0, 0]
-    ])  # Position mismatch (6DOF)
+# Simulated batch of test inputs (3 samples per loop iteration)
+test_pos_mismatch = np.array([
+    [1, 0, 0, 0, 0, 0],  
+    [10, 0, 0, 0, 0, 0],  
+    [0, 0, 0, 0, 0, 0]
+])  # Position mismatch (6DOF)
 
-    test_vel_mismatch = np.array([
-        [0.7, 0, 0.5, 0, 0, 0],  
-        [0.5, 0, 0.3, 0, 0, 0],  
-        [0.3, 0, 0.1, 0, 0, 0]
-    ])  # Velocity mismatch (6DOF)
+test_vel_mismatch = np.array([
+    [0.2, 0, 0, 0, 0, 0],  
+    [1, 0, 0, 0, 0, 0],  
+    [0, 0, 0, 0, 0, 0]
+])  # Velocity mismatch (6DOF)
 
-    test_force_input = np.array([
-        [0.3, 0, 0.32, 0, 0, 0],  
-        [0.5, 0, 0, 0, 0, 0],  
-        [0.4, 0, 0.1, 0, 0, 0]
-    ])  # Force input (6DOF)
-
+test_force_input = np.array([
+    [0.5, 0, 0, 0, 0, 0],  
+    [1, 0, 0, 0, 0, 0],  
+    [1, 0, 0, 0, 0, 0]
+])  # Force input (6DOF)
+for i in range(len(test_pos_mismatch)):
     # Combine test data
-    test_inputs = np.hstack([test_pos_mismatch, test_vel_mismatch, test_force_input])  # Shape: (num_queries, 18)
+    test_inputs = np.hstack([test_pos_mismatch[i], test_vel_mismatch[i], test_force_input[i]])  # Shape: (num_queries, 18)
 
     #Predict force corrections for all test samples
     predicted_scaling = knn_predict(test_inputs, data_x, data_y)
 
     # Print results
-    for i, scaling in enumerate(predicted_scaling):
-        print(f"\n Prediction {i+1}:")
-        print(f"  Position Mismatch: {test_pos_mismatch[i]}")
-        print(f"  Velocity Mismatch: {test_vel_mismatch[i]}")
-        print(f"  Predicted Force Scaling: {scaling}")
+    print(f"\n Prediction {i+1}:")
+    print(f"  Position Mismatch: {test_pos_mismatch[i]}")
+    print(f"  Velocity Mismatch: {test_vel_mismatch[i]}")
+    print(f"  Predicted Force Scaling: {predicted_scaling}")
 
     # Simulate real-time loop (adjust as needed)
     time.sleep(0.05)
-    n=n+1
 
 # --- CLOSE ENVIRONMENTS ---
 env_sim.close()
