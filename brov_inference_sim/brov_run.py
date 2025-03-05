@@ -14,7 +14,6 @@ loop:
 import torch
 import onnx
 
-
 ## Setup
 # Load ONNX model
 onnx_model_path = "model.onnx"  # Replace with your ONNX file
