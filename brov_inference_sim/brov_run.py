@@ -32,3 +32,5 @@ for input in onnx_model.graph.input:
 print("\nModel Outputs:")
 for output in onnx_model.graph.output:
     print(f"- {output.name}: {output.type}")
+
+
