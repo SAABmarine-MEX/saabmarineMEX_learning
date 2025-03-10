@@ -257,4 +257,32 @@ for step in range(n_steps):
 env_sim.close()
 env_real.close()
 
+from sklearn.metrics import mean_absolute_error
+
+# Define range of k values to test
+k_values = range(1, 21)  # Testing k from 1 to 20
+mae_scores = []
+
+# Iterate through different k values
+for k in k_values:
+    knn = KNeighborsRegressor(n_neighbors=k, weights='distance')
+    knn.fit(knn_x, knn_y)
+    knn_predictions = knn.predict(knn_x)
+    
+    # Compute Mean Absolute Error (MAE)
+    mae = mean_absolute_error(knn_y, knn_predictions)
+    mae_scores.append(mae)
+
+
+print("Testing knn complete!")
+
+# --- Plot MAE vs. k ---
+plt.figure(figsize=(10, 5))
+plt.plot(k_values, mae_scores, marker='o', linestyle='-', color='b')
+plt.xlabel("Number of Neighbors (k)")
+plt.ylabel("Mean Absolute Error (MAE)")
+plt.title("KNN Performance: MAE vs. k")
+plt.grid()
+plt.show()
+
 print("Testing knn complete!")
