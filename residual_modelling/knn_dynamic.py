@@ -6,10 +6,10 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION ---
-env_prior_path = "envs/res_test_prior_v3/res_prior_v3.x86_64"
-env_real_path = "envs/res_test_real_v3/res_real_v3.x86_64"
+env_prior_path = "envs/real_dynamic/prior_env/prior.x86_64"
+env_real_path = "envs/real_dynamic/real_env/real.x86_64"
 
-n_steps = 10  # Number of steps per episode
+n_steps = 80  # Number of steps per episode
 #dt = 1 / 20 
 k = 5  # Number of neighbors in KNN
 #change_action = 100
@@ -17,7 +17,7 @@ data_x = []  # Features: [state_diff (12D) + action (6D)]
 data_y = []  # Target: Force rescaling (6D)
 n = 0
 
-while n<20:
+while n<3:
     prev_sim_vel= [0,0,0,0,0,0]
     prev_real_vel = [0,0,0,0,0,0]
 
@@ -53,6 +53,7 @@ while n<20:
 
     actions = np.zeros((num_agents, action_size), dtype=np.float32)
     actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
+    #actions = np.tile([1, 0, 0, 0, 0, 0], (num_agents, 1)).astype(np.float32)
     print(f"Current actions:\n{actions}")
     for step in range(n_steps):
         #if step % change_action == 0:
@@ -73,10 +74,10 @@ while n<20:
 
         for agent_id in sim_steps.agent_id:
             #pos: [px, py, pz, roll, pitch, yaw], vel: [vx, vy, vz, ωx, ωy, ωz]
-            sim_pos_u = sim_steps[agent_id].obs[1][:6]
-            sim_vel_u = sim_steps[agent_id].obs[1][6:12]
-            real_pos_u = real_steps[agent_id].obs[1][:6]
-            real_vel_u = real_steps[agent_id].obs[1][6:12]
+            sim_pos_u = sim_steps[agent_id].obs[0][:6]
+            sim_vel_u = sim_steps[agent_id].obs[0][6:12]
+            real_pos_u = real_steps[agent_id].obs[0][:6]
+            real_vel_u = real_steps[agent_id].obs[0][6:12]
             
             # --- Convert Position & Rotation (Unity → NED) ---
             sim_pos = np.array([
@@ -99,21 +100,21 @@ while n<20:
             ])
 
             # Skip first step to avoid large initial acceleration
-            if step > 0:
+            #if step > 0:
 
-                # Compute state difference
-                #state_diff = np.concatenate([sim_pos - real_pos, sim_vel - real_vel])
-                #state = np.concatenate([sim_vel])
-                # Compute real and simulated accelerations
-                real_acc = (real_vel - prev_real_vel) #/ dt
-                sim_acc = (sim_vel - prev_sim_vel)# / dt
+            # Compute state difference
+            #state_diff = np.concatenate([sim_pos - real_pos, sim_vel - real_vel])
+            #state = np.concatenate([sim_vel])
+            # Compute real and simulated accelerations
+            real_acc = (real_vel - prev_real_vel) #/ dt
+            sim_acc = (sim_vel - prev_sim_vel)# / dt
 
-                # Compute force rescale factor
-                force_rescale = real_vel / (sim_vel + 1e-10)  # Avoid division by zero
+            # Compute force rescale factor
+            force_rescale = real_acc / (sim_acc + 1e-10)  # Avoid division by zero
 
-                # Store in dataset
-                data_x.append(np.concatenate([sim_vel, actions[agent_id]]))
-                data_y.append(force_rescale)
+            # Store in dataset
+            data_x.append(np.concatenate([sim_vel, sim_acc, actions[agent_id]]))
+            data_y.append(force_rescale)
 
             # Update previous velocities for next step
             prev_real_vel = real_vel
@@ -203,14 +204,18 @@ actions = np.zeros((num_agents, action_size), dtype=np.float32)
 actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
 print(f"Current actions:\n{actions}")
 
+prev_sim_vel= [0,0,0,0,0,0]
+prev_real_vel = [0,0,0,0,0,0]
+data_test = []
+
 for step in range(n_steps):
     # Apply actions
     for agent_id in sim_steps.agent_id:
         #pos: [px, py, pz, roll, pitch, yaw], vel: [vx, vy, vz, ωx, ωy, ωz]
-        sim_pos_u = sim_steps[agent_id].obs[1][:6]
-        sim_vel_u = sim_steps[agent_id].obs[1][6:12]
-        real_pos_u = real_steps[agent_id].obs[1][:6]
-        real_vel_u = real_steps[agent_id].obs[1][6:12]
+        sim_pos_u = sim_steps[agent_id].obs[0][:6]
+        sim_vel_u = sim_steps[agent_id].obs[0][6:12]
+        real_pos_u = real_steps[agent_id].obs[0][:6]
+        real_vel_u = real_steps[agent_id].obs[0][6:12]
         
         # --- Convert Position & Rotation (Unity → NED) ---
         sim_pos = np.array([
@@ -232,7 +237,33 @@ for step in range(n_steps):
         real_vel_u[5], real_vel_u[3], -real_vel_u[4]
         ])
 
-    predicted_scaling = knn_predict(np.concatenate([sim_vel, actions[agent_id]]))
+        print("UNITY OBSERVED IN TEST")
+        #if step > 0:
+
+        # Compute state difference
+        #state_diff = np.concatenate([sim_pos - real_pos, sim_vel - real_vel])
+        #state = np.concatenate([sim_vel])
+        # Compute real and simulated accelerations
+        real_acc = (real_vel - prev_real_vel) #/ dt
+        sim_acc = (sim_vel - prev_sim_vel)# / dt
+        print("UNITY SAVED ACC")
+
+        # Compute force rescale factor
+        #force_rescale = real_acc / (sim_acc + 1e-10)  # Avoid division by zero
+
+        # Store in dataset
+        data_test.append(np.concatenate([sim_vel ,sim_acc, actions[agent_id]]))
+        #data_y.append(force_rescale)
+
+        # Update previous velocities for next step
+        prev_real_vel = real_vel
+        prev_sim_vel = sim_vel
+
+
+    print("TEST PREDICTION")
+
+    knn_test = np.array(data_test)
+    predicted_scaling = knn_predict(knn_test)
 
     # Apply rescaled actions to simulation
     corrected_action = actions[agent_id] * predicted_scaling
@@ -256,6 +287,7 @@ for step in range(n_steps):
 
 env_sim.close()
 env_real.close()
+
 
 from sklearn.metrics import mean_absolute_error
 
