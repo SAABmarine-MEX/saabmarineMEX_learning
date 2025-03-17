@@ -20,7 +20,7 @@
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-7" value="Obs.&lt;div&gt;state&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontColor=default;labelBackgroundColor=none;" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-6">
           <mxGeometry x="-0.3649" y="-1" relative="1" as="geometry">
-            <mxPoint x="14" y="19" as="offset" />
+            <mxPoint x="39" y="19" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-4" value="Mocap" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
@@ -37,7 +37,7 @@
             <mxPoint x="680" y="240" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-17" value="Actions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-16">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-17" value="Action" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-16">
           <mxGeometry x="-0.1164" y="-2" relative="1" as="geometry">
             <mxPoint y="8" as="offset" />
           </mxGeometry>
@@ -59,6 +59,22 @@
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture for our case.&lt;div&gt;Keep input, hidden, output layer description but for our case&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="320" y="345" width="340" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-19" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.301;entryY=1.007;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="KSEN4iGP1RPTjicuWni1-10">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="630" y="240" as="sourcePoint" />
+            <mxPoint x="360" y="220" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="630" y="120" />
+              <mxPoint x="360" y="120" />
+              <mxPoint x="360" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-22" value="Previous action" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-19">
+          <mxGeometry x="0.0402" y="-2" relative="1" as="geometry">
+            <mxPoint x="5" y="-8" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
