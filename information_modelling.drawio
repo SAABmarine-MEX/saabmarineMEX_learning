@@ -8,7 +8,7 @@
           <mxGeometry x="120" y="90" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-2" value="" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="40" y="120" width="280" height="240" as="geometry" />
+          <mxGeometry x="40" y="120" width="280" height="360" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-3" value="Perception system" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="50" y="120" width="120" height="30" as="geometry" />
@@ -76,11 +76,19 @@
             <mxPoint x="5" y="-8" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-28" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1.004;entryY=0.887;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-23" target="KSEN4iGP1RPTjicuWni1-2">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="730" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-23" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://www.substore.fi/tuotekuvat/1140x/BlueROV2.jpg;" vertex="1" parent="1">
           <mxGeometry x="680" y="155" width="347.67" height="190" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-25" value="Real-world deployment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="680" y="125" width="150" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-26" value="TODO: change to picture of brov in tank" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="900" y="345" width="240" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
