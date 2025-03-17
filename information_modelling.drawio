@@ -49,7 +49,7 @@
           <mxGeometry x="480" y="160" width="100" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-13" value="MLP=multi-layer perceptron" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="420" y="40" width="170" height="30" as="geometry" />
+          <mxGeometry x="420" y="50" width="170" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-14" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:682/1*H4f1fn16buJ0ISijyzuVOw.png;" vertex="1" parent="1">
           <mxGeometry x="415.37" y="205" width="149.26" height="130" as="geometry" />
