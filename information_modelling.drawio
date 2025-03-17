@@ -148,6 +148,20 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-45" value="Action" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="870" y="798" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-46" value="" style="endArrow=classic;html=1;rounded=0;exitX=1.006;exitY=0.028;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-45" target="KSEN4iGP1RPTjicuWni1-42">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1000" y="850" as="sourcePoint" />
+            <mxPoint x="930" y="670" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1000" y="800" />
+              <mxPoint x="1000" y="640" />
+              <mxPoint x="955" y="640" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
