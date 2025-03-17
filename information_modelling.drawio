@@ -57,8 +57,8 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-14" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:682/1*H4f1fn16buJ0ISijyzuVOw.png;" vertex="1" parent="1">
           <mxGeometry x="415.37" y="205" width="149.26" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture for our case" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="350" y="350" width="280" height="30" as="geometry" />
+        <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture for our case.&lt;div&gt;Keep input, hidden, output layer description but for our case&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="320" y="345" width="340" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
