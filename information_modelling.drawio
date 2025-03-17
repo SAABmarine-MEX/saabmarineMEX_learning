@@ -27,10 +27,20 @@
           <mxGeometry x="105" y="205" width="150" height="70" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-8" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Variables&lt;/h1&gt;&lt;p&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Observation space&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="770" y="80" width="180" height="120" as="geometry" />
+          <mxGeometry x="850" y="45" width="180" height="120" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-9" value="X Hz" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="195" y="205" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-10">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="680" y="240" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-17" value="Actions" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-16">
+          <mxGeometry x="-0.1164" y="-2" relative="1" as="geometry">
+            <mxPoint y="8" as="offset" />
+          </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-10" value="" style="shape=loopLimit;whiteSpace=wrap;html=1;direction=south;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
           <mxGeometry x="400" y="140" width="180" height="200" as="geometry" />
@@ -47,8 +57,8 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-14" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:682/1*H4f1fn16buJ0ISijyzuVOw.png;" vertex="1" parent="1">
           <mxGeometry x="415.37" y="205" width="149.26" height="130" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="385" y="350" width="210" height="30" as="geometry" />
+        <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture for our case" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="350" y="350" width="280" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
