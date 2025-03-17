@@ -5,7 +5,7 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="KSEN4iGP1RPTjicuWni1-1" value="&lt;b&gt;a&lt;/b&gt; Real-world operation" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="120" y="90" width="140" height="30" as="geometry" />
+          <mxGeometry x="40" y="90" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-2" value="" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
           <mxGeometry x="40" y="120" width="280" height="360" as="geometry" />
@@ -100,6 +100,9 @@
             <mxPoint x="600" y="520" as="sourcePoint" />
             <mxPoint x="600" y="440" as="targetPoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-31" value="&lt;b&gt;b&lt;/b&gt; RL training loop" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="40" y="530" width="120" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
