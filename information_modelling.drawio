@@ -8,10 +8,10 @@
           <mxGeometry x="120" y="90" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-2" value="" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
-          <mxGeometry x="120" y="120" width="200" height="160" as="geometry" />
+          <mxGeometry x="40" y="120" width="280" height="240" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-3" value="Perception system" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="120" y="120" width="120" height="30" as="geometry" />
+          <mxGeometry x="50" y="120" width="120" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
           <mxGeometry relative="1" as="geometry">
@@ -24,25 +24,31 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-4" value="Mocap" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="145" y="165" width="150" height="70" as="geometry" />
+          <mxGeometry x="105" y="205" width="150" height="70" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-8" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Variables&lt;/h1&gt;&lt;p&gt;&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Observation space&lt;/li&gt;&lt;li&gt;&lt;br&gt;&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="770" y="80" width="180" height="120" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-9" value="X Hz" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="235" y="165" width="60" height="30" as="geometry" />
+          <mxGeometry x="195" y="205" width="60" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-10" value="" style="shape=loopLimit;whiteSpace=wrap;html=1;direction=south;fillColor=#f8cecc;strokeColor=#b85450;" vertex="1" parent="1">
-          <mxGeometry x="400" y="140" width="120" height="120" as="geometry" />
+          <mxGeometry x="400" y="140" width="180" height="200" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-11" value="Control policy&amp;nbsp;π" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="400" y="140" width="100" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-12" value="X Hz&lt;br&gt;MLP: 2x128" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="420" y="160" width="100" height="30" as="geometry" />
+          <mxGeometry x="480" y="160" width="100" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-13" value="MLP=multi-layer perceptron" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="420" y="40" width="170" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-14" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://miro.medium.com/v2/resize:fit:682/1*H4f1fn16buJ0ISijyzuVOw.png;" vertex="1" parent="1">
+          <mxGeometry x="415.37" y="205" width="149.26" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-15" value="TODO: change to better NN picture" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="385" y="350" width="210" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
