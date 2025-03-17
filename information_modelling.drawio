@@ -200,7 +200,7 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-58" value="Mocap" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="105" y="205" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-59" value="Position" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-59" value="Body frame position" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="122.5" y="295" width="115" height="50" as="geometry" />
         </mxCell>
       </root>
