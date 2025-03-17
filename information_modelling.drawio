@@ -175,16 +175,24 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-50" value="Dynamic&lt;br&gt;residual" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="700" y="780" width="70" height="40" as="geometry" />
+          <mxGeometry x="720" y="780" width="70" height="40" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-51" value="" style="shape=datastore;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="710" y="680" width="60" height="60" as="geometry" />
+          <mxGeometry x="730" y="680" width="60" height="60" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.565;entryY=0.008;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-51" target="KSEN4iGP1RPTjicuWni1-50">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-53" value="Real-world&lt;br&gt;experience" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="770" y="690" width="80" height="40" as="geometry" />
+          <mxGeometry x="790" y="690" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.996;entryY=0.726;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-50" target="KSEN4iGP1RPTjicuWni1-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-56" value="Residual force and torque" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="KSEN4iGP1RPTjicuWni1-54">
+          <mxGeometry x="0.0081" y="-1" relative="1" as="geometry">
+            <mxPoint x="8" y="-19" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
