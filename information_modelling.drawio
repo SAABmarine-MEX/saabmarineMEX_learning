@@ -13,7 +13,7 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-3" value="Perception system" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="50" y="120" width="120" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.54;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="360" y="200" as="targetPoint" />
           </mxGeometry>
