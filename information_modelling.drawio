@@ -76,6 +76,12 @@
             <mxPoint x="5" y="-8" as="offset" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-23" value="" style="shape=image;verticalLabelPosition=bottom;labelBackgroundColor=default;verticalAlign=top;aspect=fixed;imageAspect=0;image=https://www.substore.fi/tuotekuvat/1140x/BlueROV2.jpg;" vertex="1" parent="1">
+          <mxGeometry x="680" y="155" width="347.67" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="KSEN4iGP1RPTjicuWni1-25" value="Real-world deployment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="680" y="125" width="150" height="30" as="geometry" />
+        </mxCell>
       </root>
     </mxGraphModel>
   </diagram>
