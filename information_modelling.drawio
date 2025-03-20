@@ -260,7 +260,7 @@
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-11" value="Control policy&amp;nbsp;π" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="400" y="140" width="100" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-12" value="X Hz&lt;br&gt;MLP: 2x128" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-12" value="MLP: 2x128" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="480" y="160" width="100" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-14" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.301;entryY=1.007;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="DW2AN5qdoQ9eiJ-wtspO-10">
