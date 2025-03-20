@@ -244,9 +244,6 @@
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-6" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="105" y="205" width="150" height="175" as="geometry" />
         </mxCell>
-        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-7" value="X Hz" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="195" y="205" width="60" height="30" as="geometry" />
-        </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="DW2AN5qdoQ9eiJ-wtspO-10">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="680" y="240" as="targetPoint" />
@@ -265,9 +262,6 @@
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-12" value="X Hz&lt;br&gt;MLP: 2x128" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="480" y="160" width="100" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-13" value="TODO: Add info about input layer, (hidden layer) and outputlayer" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="330" y="340" width="370" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-14" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.301;entryY=1.007;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" target="DW2AN5qdoQ9eiJ-wtspO-10">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
@@ -300,9 +294,6 @@
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-19" value="Real-world deployment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="680" y="125" width="150" height="30" as="geometry" />
-        </mxCell>
-        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-20" value="TODO: change to picture of brov in tank" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
-          <mxGeometry x="780" y="370" width="240" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-21" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;dashed=1;" edge="1" parent="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
