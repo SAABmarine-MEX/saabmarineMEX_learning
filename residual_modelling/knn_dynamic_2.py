@@ -6,17 +6,28 @@ from sklearn.neighbors import KNeighborsRegressor
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION ---
-env_prior_path = "envs/real_dynamic/prior_env/prior.x86_64"
-env_real_path = "envs/real_dynamic/real_env/real.x86_64"
+env_prior_path = "envs/real_dynamic/prior_env2/prior.x86_64"
+env_real_path = "envs/real_dynamic/real_env2/real.x86_64"
 
-n_steps = 100  # Number of steps per episode
-k = 5  # Number of neighbors in KNN
-change_action = 20  # Change action every X steps
-data_x = []  # Features: [sim_vel (6D) + sim_acc (6D) + action (6D)]
-data_y = []  # Target: Force rescaling (6D)
+n_steps =400  # steps per episode
+k = 5  # k neigbours
+change_action = 50
+data_x = []  # sim pos, sim_vel, sim_acc, action
+data_y = []  # Force rescaling (6D)
 n = 0
 
-while n < 10:
+
+# z, x, -y = x, y, z
+train_action_sequence = [[1, 0, 0, 0, 0, 0],
+                        [0, -1, 0, 0, 0, 0],
+                        [-1, 0, 0, 0, 0, 0],
+                        [0, 1, 0, 0, 0, 0]]
+test_action_sequence = [[0.7, 0, 0, 0, 0, 0],
+                        [0, -0.7, 0, 0, 0, 0],
+                        [-0.7, 0, 0, 0, 0, 0],
+                        [0, 0.7, 0, 0, 0, 0]]
+
+while n < 1:
     # --- INITIALIZE ENVIRONMENTS ---
     env_sim = UnityEnvironment(file_name=env_prior_path, seed=1, worker_id=0, side_channels=[])
     print("Loaded prior env!")
@@ -37,8 +48,11 @@ while n < 10:
 
     print(f"\nStarting simulation {n+1} for data collection...")
 
-    # Initialize actions (change every `change_action` steps)
-    actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
+    # Initialize actions 
+
+    current_action_index = 0
+    actions = np.tile(train_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+    print(f"Current actions:\n{actions}")
 
     prev_sim_vel = np.zeros(6)
     prev_real_vel = np.zeros(6)
@@ -73,11 +87,17 @@ while n < 10:
             #if step % change_action == 0:
                 #actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
                 #print(f"Step {step}: Updated Actions:\n{actions}")
-
+            if step % change_action == 0:
+                current_action_index = (current_action_index + 1) % len(train_action_sequence)
+                actions[:] = np.tile(train_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+                print(f"Current actions:\n{actions}")
             # Send actions to the environments
             action_tuple = ActionTuple(continuous=actions)
             env_sim.set_actions(behavior_name_sim, action_tuple)
             env_real.set_actions(behavior_name_real, action_tuple)
+            
+            print(f"\nStep {step+1}")
+            print(f"Action: {actions}")
 
             # Update previous velocities for next step
             prev_real_vel = real_vel
@@ -96,7 +116,7 @@ with open("knn_data.pkl", "wb") as f:
 print("\nTraining data collection complete! Full dataset saved.")
 
 #Plot
-num_actions = 6 
+num_actions = 6
 plt.figure(figsize=(12, 6))
 for i in range(num_actions):
     plt.scatter(knn_x[:, -num_actions + i], knn_y[:, i], alpha=0.5, label=f"Action {i+1}")
@@ -123,8 +143,10 @@ prev_sim_vel = np.zeros(6)
 prev_real_vel = np.zeros(6)
 #data_test = []
 #data_test = np.array(data_test)
-
-actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
+current_action_index = 0
+actions = np.tile(test_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+print(f"Current actions:\n{actions}")
+#actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
 for step in range(n_steps):
     # Step environments
     env_sim.step()
@@ -148,8 +170,14 @@ for step in range(n_steps):
         prev_real_vel = real_vel
         prev_sim_vel = sim_vel
 
-    #if step % change_action == 0:
-        #actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
+        #if step % change_action == 0:
+            #actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
+        if step % change_action == 0:
+            current_action_index = (current_action_index + 1) % len(test_action_sequence)
+            actions[:] = np.tile(test_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+            
+            print(f"Current actions:\n{actions}")
+
 
         knn_test = np.array(data_test).reshape(1, -1)  # Ensure 2D shape (1, features)
         predicted_scaling = knn.predict(knn_test)
