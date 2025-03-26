@@ -10,14 +10,14 @@ from mlagents_envs.base_env import ActionTuple
 env_prior_path = "envs/real_dynamic/prior_env/prior.x86_64"
 env_real_path = "envs/real_dynamic/real_env/real.x86_64"
 
-n_steps = 100  # Number of steps per episode
-change_action = 20  # Change action every X steps
+n_steps = 300  # steps per episode
+change_action = 20
 n = 0
 num_tasks = 6  # 6D force rescaling
 
 # Data storage
-data_x = []  # Features: [sim_vel (6D) + sim_acc (6D) + action (6D)]
-data_y = []  # Target: Force rescaling (6D)
+data_x = []  # sim pos, sim_vel, sim_acc, action
+data_y = []  # Force rescaling (6D)
 
 # --- ENVIRONMENT SETUP & DATA COLLECTION ---
 while n < 1:
@@ -71,7 +71,10 @@ while n < 1:
             action_tuple = ActionTuple(continuous=actions)
             env_sim.set_actions(behavior_name_sim, action_tuple)
             env_real.set_actions(behavior_name_real, action_tuple)
-            
+
+            print(f"\nStep {step+1}")
+            print(f"Action: {actions}")   
+
             prev_real_vel = real_vel
             prev_sim_vel = sim_vel
 
@@ -141,8 +144,8 @@ for step in range(n_steps):
         sim_vel = sim_steps[agent_id].obs[0][6:12]
         real_vel = real_steps[agent_id].obs[0][6:12]
 
-        sim_acc = sim_vel - prev_sim_vel
-        real_acc = real_vel - prev_real_vel
+        sim_acc = (sim_vel - prev_sim_vel)
+        real_acc = (real_vel - prev_real_vel)
         
         test_x = torch.tensor(np.concatenate([sim_pos, sim_vel, sim_acc, actions[agent_id]]), dtype=torch.float32).unsqueeze(0)
         with torch.no_grad():

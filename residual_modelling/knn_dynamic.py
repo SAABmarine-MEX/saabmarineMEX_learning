@@ -9,15 +9,23 @@ import matplotlib.pyplot as plt
 env_prior_path = "envs/real_dynamic/prior_env/prior.x86_64"
 env_real_path = "envs/real_dynamic/real_env/real.x86_64"
 
-n_steps = 80  # Number of steps per episode
+n_steps = 400  # Number of steps per episode
 #dt = 1 / 20 
 k = 5  # Number of neighbors in KNN
-#change_action = 100
+change_action = 50
 data_x = []  # Features: [state_diff (12D) + action (6D)]
 data_y = []  # Target: Force rescaling (6D)
 n = 0
+training_action_sequence = [[1, 0, 0.5, 0, 0, 0],
+                            [0, 1, 0.5, 0, 0, 0],
+                            [-1, 0, 0.5, 0, 0, 0],
+                            [0, -1, 0.5, 0, 0, 0]]
+test_action_sequence = [[0.8, 0, 0.5, 0, 0, 0],
+                        [0, 0.8, 0.5, 0, 0, 0],
+                        [-0.8, 0, 0.5, 0, 0, 0],
+                        [0, -0.8, 0.5, 0, 0, 0]]
 
-while n<3:
+while n<1:
     prev_sim_vel= [0,0,0,0,0,0]
     prev_real_vel = [0,0,0,0,0,0]
 
@@ -51,19 +59,11 @@ while n<3:
 
     print(f"\nStarting simulation {n} for data collection...")
 
-    actions = np.zeros((num_agents, action_size), dtype=np.float32)
-    actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
-    #actions = np.tile([1, 0, 0, 0, 0, 0], (num_agents, 1)).astype(np.float32)
+    current_action_index = 0
+    actions = np.tile(action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+
     print(f"Current actions:\n{actions}")
     for step in range(n_steps):
-        #if step % change_action == 0:
-            #actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
-            #print(f"Current actions:\n{actions}")
-        # Apply actions
-        action_tuple = ActionTuple(continuous=actions)
-        env_sim.set_actions(behavior_name_sim, action_tuple)
-        env_real.set_actions(behavior_name_real, action_tuple)
-
         # Step
         env_sim.step()
         env_real.step()
@@ -111,10 +111,21 @@ while n<3:
 
             # Compute force rescale factor
             force_rescale = real_acc / (sim_acc + 1e-10)  # Avoid division by zero
+            
+            if step % change_action == 0:
+                current_action_index = (current_action_index + 1) % len(training_action_sequence)
+                actions[:] = np.tile(action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+                print(f"Current actions:\n{actions}")
+                input()
+                #Apply actions
+            action_tuple = ActionTuple(continuous=actions)
 
+            env_sim.set_actions(behavior_name_sim, action_tuple)
+            env_real.set_actions(behavior_name_real, action_tuple)
             # Store in dataset
-            data_x.append(np.concatenate([sim_vel, sim_acc, actions[agent_id]]))
-            data_y.append(force_rescale)
+            if step > 0:
+                data_x.append(np.concatenate([sim_vel, sim_acc, actions[agent_id]]))
+                data_y.append(force_rescale)
 
             # Update previous velocities for next step
             prev_real_vel = real_vel
@@ -199,17 +210,18 @@ action_size = behavior_spec_sim.action_spec.continuous_size  # Expecting 6DOF fo
 behavior_name_real = list(env_real.behavior_specs.keys())[0]
 behavior_spec_real = env_real.behavior_specs[behavior_name_real]
 
-print("Starting simulation with knn predictions...")
-actions = np.zeros((num_agents, action_size), dtype=np.float32)
-actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
-print(f"Current actions:\n{actions}")
-
 prev_sim_vel= [0,0,0,0,0,0]
 prev_real_vel = [0,0,0,0,0,0]
 data_test = []
-
+actions = np.random.uniform(-1, 1, (num_agents, action_size)).astype(np.float32)
 for step in range(n_steps):
-    # Apply actions
+    # Step
+    env_sim.step()
+    env_real.step()
+
+    # States
+    sim_steps, _ = env_sim.get_steps(behavior_name_sim)
+    real_steps, _ = env_real.get_steps(behavior_name_real)
     for agent_id in sim_steps.agent_id:
         #pos: [px, py, pz, roll, pitch, yaw], vel: [vx, vy, vz, ωx, ωy, ωz]
         sim_pos_u = sim_steps[agent_id].obs[0][:6]
@@ -251,9 +263,27 @@ for step in range(n_steps):
         # Compute force rescale factor
         #force_rescale = real_acc / (sim_acc + 1e-10)  # Avoid division by zero
 
+        # Compute force rescale factor
+        force_rescale = real_acc / (sim_acc + 1e-10)  # Avoid division by zero
+        if step % change_action == 0:
+            current_action_index = (current_action_index + 1) % len(test_action_sequence)
+            actions[:] = np.tile(test_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
+            
+            print(f"Current actions:\n{actions}")
+
+        #Apply actions
+        knn_test = np.array(data_test)
+        predicted_scaling = knn_predict(knn_test)
+
+        # Apply rescaled actions to simulation
+        corrected_action = actions[agent_id] * predicted_scaling
+        action_tuple = ActionTuple(continuous=actions)
+        env_sim.set_actions(behavior_name_sim, action_tuple)
+        env_real.set_actions(behavior_name_real, action_tuple)
         # Store in dataset
-        data_test.append(np.concatenate([sim_vel ,sim_acc, actions[agent_id]]))
-        #data_y.append(force_rescale)
+        if step > 0:
+            data_test.append(np.concatenate([sim_vel, sim_acc, corrected_action[agent_id]]))
+            data_y.append(force_rescale)
 
         # Update previous velocities for next step
         prev_real_vel = real_vel
