@@ -426,8 +426,23 @@
         <mxCell id="OU4teJlSop-BBDzLyAPY-1" value="Operator input" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="110" y="150" width="120" height="60" as="geometry" />
         </mxCell>
+        <mxCell id="OU4teJlSop-BBDzLyAPY-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="OU4teJlSop-BBDzLyAPY-2" target="OU4teJlSop-BBDzLyAPY-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
         <mxCell id="OU4teJlSop-BBDzLyAPY-2" value="Mission planner" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="360" y="150" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OU4teJlSop-BBDzLyAPY-4" value="rl inference" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OU4teJlSop-BBDzLyAPY-8" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="OU4teJlSop-BBDzLyAPY-5" target="OU4teJlSop-BBDzLyAPY-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OU4teJlSop-BBDzLyAPY-5" value="State&amp;nbsp;&lt;div&gt;(mocap)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="310" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OU4teJlSop-BBDzLyAPY-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="OU4teJlSop-BBDzLyAPY-4" target="OU4teJlSop-BBDzLyAPY-4">
+          <mxGeometry relative="1" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
