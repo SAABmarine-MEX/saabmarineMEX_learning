@@ -322,8 +322,8 @@
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-27" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="275" y="560" width="300" height="300" as="geometry" />
         </mxCell>
-        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-28" value="Reward" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="125" y="560" width="60" height="30" as="geometry" />
+        <mxCell id="DW2AN5qdoQ9eiJ-wtspO-28" value="Reward system" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
+          <mxGeometry x="100" y="560" width="110" height="30" as="geometry" />
         </mxCell>
         <mxCell id="DW2AN5qdoQ9eiJ-wtspO-29" value="Physics simulation" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="365" y="560" width="120" height="30" as="geometry" />
