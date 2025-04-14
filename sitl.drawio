@@ -26,7 +26,7 @@
           <mxGeometry x="320" y="430" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="_XsQ5IY7v1GqLBPNuJcG-8" value="mlagents" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="120" y="430" width="120" height="60" as="geometry" />
+          <mxGeometry x="20" y="430" width="120" height="60" as="geometry" />
         </mxCell>
         <mxCell id="_XsQ5IY7v1GqLBPNuJcG-9" value="Unity" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="520" y="430" width="120" height="60" as="geometry" />
