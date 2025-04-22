@@ -1,0 +1,38 @@
+{
+    "brov": {
+        "checkpoints": [
+            {
+                "steps": 499991,
+                "file_path": "results/py_test_pool/brov/brov-499991.onnx",
+                "reward": -2.730846847190095,
+                "creation_time": 1744283921.9520693,
+                "auxillary_file_paths": [
+                    "results/py_test_pool/brov/brov-499991.pt"
+                ]
+            },
+            {
+                "steps": 500001,
+                "file_path": "results/py_test_pool/brov/brov-500001.onnx",
+                "reward": -2.7291676428847182,
+                "creation_time": 1744283921.9636016,
+                "auxillary_file_paths": [
+                    "results/py_test_pool/brov/brov-500001.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 500001,
+            "file_path": "results/py_test_pool/brov.onnx",
+            "reward": -2.7291676428847182,
+            "creation_time": 1744283921.9636016,
+            "auxillary_file_paths": [
+                "results/py_test_pool/brov/brov-500001.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}
