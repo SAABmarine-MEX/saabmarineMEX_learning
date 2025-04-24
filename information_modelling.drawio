@@ -19,7 +19,7 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-9" value="X Hz" style="text;html=1;align=right;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="190" y="217.5" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" source="KSEN4iGP1RPTjicuWni1-10" edge="1">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.002;entryY=0.481;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="KSEN4iGP1RPTjicuWni1-10" edge="1" target="QTcEljHnfpTtB1hUW3qP-1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="680" y="240" as="targetPoint" />
           </mxGeometry>
@@ -74,7 +74,7 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-25" value="Real-world deployment" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
           <mxGeometry x="680.44" y="90" width="150" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-30" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" parent="1" edge="1" source="KSEN4iGP1RPTjicuWni1-51">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-30" value="" style="endArrow=classic;startArrow=classic;html=1;rounded=0;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.31;entryY=1.008;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" edge="1" target="QTcEljHnfpTtB1hUW3qP-1" source="KSEN4iGP1RPTjicuWni1-51">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
             <mxPoint x="810" y="570" as="sourcePoint" />
             <mxPoint x="810" y="380" as="targetPoint" />
@@ -151,10 +151,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-50" value="Dynamic&lt;br&gt;residual" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
-          <mxGeometry x="775" y="680" width="70" height="40" as="geometry" />
+          <mxGeometry x="730" y="680" width="70" height="40" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-51" value="" style="shape=datastore;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="785" y="580" width="60" height="60" as="geometry" />
+          <mxGeometry x="740" y="580" width="60" height="60" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-52" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.565;entryY=0.008;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="KSEN4iGP1RPTjicuWni1-51" target="KSEN4iGP1RPTjicuWni1-50" edge="1">
           <mxGeometry relative="1" as="geometry" />
@@ -165,9 +165,9 @@
         <mxCell id="KSEN4iGP1RPTjicuWni1-54" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.999;entryY=0.571;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="KSEN4iGP1RPTjicuWni1-50" target="KSEN4iGP1RPTjicuWni1-32" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="KSEN4iGP1RPTjicuWni1-56" value="Residual force and torque" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KSEN4iGP1RPTjicuWni1-54" vertex="1" connectable="0">
+        <mxCell id="KSEN4iGP1RPTjicuWni1-56" value="Residual &lt;br&gt;force and torque" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KSEN4iGP1RPTjicuWni1-54" vertex="1" connectable="0">
           <mxGeometry x="0.0081" y="-1" relative="1" as="geometry">
-            <mxPoint x="8" y="-19" as="offset" />
+            <mxPoint x="13" y="-19" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-58" value="Mocap" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" parent="1" vertex="1">
