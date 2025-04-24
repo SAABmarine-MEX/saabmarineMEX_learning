@@ -8,7 +8,7 @@
           <mxGeometry x="82.5" y="90" width="140" height="30" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-2" value="" style="rounded=1;whiteSpace=wrap;html=1;align=left;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
-          <mxGeometry x="75" y="120" width="240" height="300" as="geometry" />
+          <mxGeometry x="75" y="120" width="225" height="300" as="geometry" />
         </mxCell>
         <mxCell id="KSEN4iGP1RPTjicuWni1-3" value="Perception system" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="82.5" y="120" width="120" height="30" as="geometry" />
@@ -194,15 +194,15 @@
         <mxCell id="74mdV84P7SCcx_LTyDvJ-5" value="TODO: update rl tanks image" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="112.5" y="810" width="180" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.694;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.988;exitY=0.19;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="200" y="390" as="sourcePoint" />
-            <mxPoint x="360" y="265" as="targetPoint" />
+            <mxPoint x="270" y="235" as="sourcePoint" />
+            <mxPoint x="400" y="235" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-22" value="Observation &lt;br&gt;state" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-12">
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-22" value="Orientation" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-12">
           <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
-            <mxPoint x="-2" y="-18" as="offset" />
+            <mxPoint x="-10" y="-10" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="74mdV84P7SCcx_LTyDvJ-23" value="Orientation" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
@@ -213,6 +213,28 @@
         </mxCell>
         <mxCell id="74mdV84P7SCcx_LTyDvJ-25" value="Rel. vector to next gate" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="130" y="302.5" width="130" height="26.25" as="geometry" />
+        </mxCell>
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-26" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.996;exitY=0.471;exitDx=0;exitDy=0;entryX=0.679;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="270" y="315.32" as="sourcePoint" />
+            <mxPoint x="400" y="315.32" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-27" value="Velocities" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-26">
+          <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
+            <mxPoint x="-11" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-28" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.998;exitY=0.81;exitDx=0;exitDy=0;entryX=0.884;entryY=0.994;entryDx=0;entryDy=0;entryPerimeter=0;exitPerimeter=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="268.62" y="315.52500000000003" as="sourcePoint" />
+            <mxPoint x="400.00000000000006" y="315.6" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-29" value="Relative vector &lt;br&gt;to next gate" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-28">
+          <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
+            <mxPoint x="-10" y="-15" as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
