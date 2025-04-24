@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0" version="26.2.14" pages="4">
   <diagram name="Page-1" id="gdyFtLx7PJCrjDiUKouo">
-    <mxGraphModel dx="983" dy="573" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="683" dy="398" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -200,7 +200,7 @@
             <mxPoint x="360" y="265" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-22" value="Observation &lt;br&gt;space" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-12">
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-22" value="Observation &lt;br&gt;state" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];labelBackgroundColor=none;" vertex="1" connectable="0" parent="74mdV84P7SCcx_LTyDvJ-12">
           <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
             <mxPoint x="-2" y="-18" as="offset" />
           </mxGeometry>
