@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0" version="26.2.14" pages="4">
   <diagram name="Page-1" id="gdyFtLx7PJCrjDiUKouo">
-    <mxGraphModel dx="683" dy="398" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="561" dy="327" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -194,9 +194,9 @@
         <mxCell id="74mdV84P7SCcx_LTyDvJ-5" value="TODO: update rl tanks image" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="112.5" y="810" width="180" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-12" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.988;exitY=0.19;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
+        <mxCell id="74mdV84P7SCcx_LTyDvJ-12" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" target="KSEN4iGP1RPTjicuWni1-10">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
-            <mxPoint x="270" y="235" as="sourcePoint" />
+            <mxPoint x="270" y="240" as="sourcePoint" />
             <mxPoint x="400" y="235" as="targetPoint" />
           </mxGeometry>
         </mxCell>
@@ -204,15 +204,6 @@
           <mxGeometry x="0.2596" y="-2" relative="1" as="geometry">
             <mxPoint x="-10" y="-10" as="offset" />
           </mxGeometry>
-        </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-23" value="Orientation" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="130" y="250" width="130" height="26.25" as="geometry" />
-        </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-24" value="Velocities" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="130" y="276.25" width="130" height="26.25" as="geometry" />
-        </mxCell>
-        <mxCell id="74mdV84P7SCcx_LTyDvJ-25" value="Rel. vector to next gate" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="130" y="302.5" width="130" height="26.25" as="geometry" />
         </mxCell>
         <mxCell id="74mdV84P7SCcx_LTyDvJ-26" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.996;exitY=0.471;exitDx=0;exitDy=0;entryX=0.679;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitPerimeter=0;" edge="1" parent="1" source="KSEN4iGP1RPTjicuWni1-4" target="KSEN4iGP1RPTjicuWni1-10">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
