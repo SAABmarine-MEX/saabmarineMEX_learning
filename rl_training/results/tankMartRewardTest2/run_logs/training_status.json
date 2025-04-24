@@ -1,0 +1,29 @@
+{
+    "Brov": {
+        "checkpoints": [
+            {
+                "steps": 326095,
+                "file_path": "results/tankMartRewardTest2/Brov/Brov-326095.onnx",
+                "reward": 369.91096481622435,
+                "creation_time": 1745507683.5915947,
+                "auxillary_file_paths": [
+                    "results/tankMartRewardTest2/Brov/Brov-326095.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 326095,
+            "file_path": "results/tankMartRewardTest2/Brov.onnx",
+            "reward": 369.91096481622435,
+            "creation_time": 1745507683.5915947,
+            "auxillary_file_paths": [
+                "results/tankMartRewardTest2/Brov/Brov-326095.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

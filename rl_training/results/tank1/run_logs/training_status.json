@@ -1,0 +1,38 @@
+{
+    "Brov": {
+        "checkpoints": [
+            {
+                "steps": 499971,
+                "file_path": "results/tank1/Brov/Brov-499971.onnx",
+                "reward": 7.683250347773234,
+                "creation_time": 1745352584.6731899,
+                "auxillary_file_paths": [
+                    "results/tank1/Brov/Brov-499971.pt"
+                ]
+            },
+            {
+                "steps": 741320,
+                "file_path": "results/tank1/Brov/Brov-741320.onnx",
+                "reward": 13.193241959187523,
+                "creation_time": 1745353257.56303,
+                "auxillary_file_paths": [
+                    "results/tank1/Brov/Brov-741320.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 741320,
+            "file_path": "results/tank1/Brov.onnx",
+            "reward": 13.193241959187523,
+            "creation_time": 1745353257.56303,
+            "auxillary_file_paths": [
+                "results/tank1/Brov/Brov-741320.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

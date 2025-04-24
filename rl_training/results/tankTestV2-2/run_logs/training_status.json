@@ -1,0 +1,65 @@
+{
+    "Brov": {
+        "checkpoints": [
+            {
+                "steps": 3499651,
+                "file_path": "results/tankTestV2-2/Brov/Brov-3499651.onnx",
+                "reward": 79.25122528388852,
+                "creation_time": 1745525028.7822068,
+                "auxillary_file_paths": [
+                    "results/tankTestV2-2/Brov/Brov-3499651.pt"
+                ]
+            },
+            {
+                "steps": 3999905,
+                "file_path": "results/tankTestV2-2/Brov/Brov-3999905.onnx",
+                "reward": 186.679775147211,
+                "creation_time": 1745526295.535167,
+                "auxillary_file_paths": [
+                    "results/tankTestV2-2/Brov/Brov-3999905.pt"
+                ]
+            },
+            {
+                "steps": 4499510,
+                "file_path": "results/tankTestV2-2/Brov/Brov-4499510.onnx",
+                "reward": 316.2090570926666,
+                "creation_time": 1745527546.752463,
+                "auxillary_file_paths": [
+                    "results/tankTestV2-2/Brov/Brov-4499510.pt"
+                ]
+            },
+            {
+                "steps": 4730807,
+                "file_path": "results/tankTestV2-2/Brov/Brov-4730807.onnx",
+                "reward": 552.1234029889107,
+                "creation_time": 1745528253.1838691,
+                "auxillary_file_paths": [
+                    "results/tankTestV2-2/Brov/Brov-4730807.pt"
+                ]
+            },
+            {
+                "steps": 4740127,
+                "file_path": "results/tankTestV2-2/Brov/Brov-4740127.onnx",
+                "reward": 357.41994619369507,
+                "creation_time": 1745528311.9680965,
+                "auxillary_file_paths": [
+                    "results/tankTestV2-2/Brov/Brov-4740127.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 4740127,
+            "file_path": "results/tankTestV2-2/Brov.onnx",
+            "reward": 357.41994619369507,
+            "creation_time": 1745528311.9680965,
+            "auxillary_file_paths": [
+                "results/tankTestV2-2/Brov/Brov-4740127.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}
