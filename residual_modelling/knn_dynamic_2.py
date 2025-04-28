@@ -7,10 +7,10 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 
 # --- CONFIGURATION ---
-env_prior_path = "envs/real_dynamic/prior_env3/prior.x86_64"
-env_real_path = "envs/real_dynamic/real_env3/real.x86_64"
+env_prior_path = "envs/sitl_envs/v2/prior/prior.x86_64"
+env_real_path = "envs/sitl_envs/v2/real/real.x86_64"
 
-n_steps = 360  # steps per episode
+n_steps = 90  # steps per episode
 k = 5  # k neigbours
 change_action = 30
 data_x = []  # sim pos(ROT ONLY), sim_vel, sim_acc, action
@@ -19,30 +19,9 @@ n = 0
 
 
 # z, x, -y = x, y, z
-train_action_sequence = [[0, 0, 0, 0, 0, 0],
-                        [0.8, 0, 0, 0, 0, 0],
-                        [0, 0.8, 0, 0, 0, 0],
-                        [-0.8, 0, 0, 0, 0, 0],
-                        [0, -0.8, 0, 0, 0, 0],
-                        [0.5, 0, 0, 0, 0, 0.2],
-                        [0.5, 0, 0, 0, 0, 0.2],
-                        [0, -1, 0.1, 0, 0, 0],
-                        [0, 1, -0.1, 0, 0, 0],
-                        [0, 0, 0, 1, 0, 0],
-                        [0, 0, 0, 0, 1, 0],
-                        [0, 0, 0, 0, 0, 1]]
-test_action_sequence = [[0, 0, 0, 0, 0, 0],
-                        [0.5, 0, 0, 0, 0, 0],
-                        [0, 0.5, 0, 0, 0, 0],
-                        [-0.5, 0, 0, 0, 0, 0],
-                        [0, -0.5, 0, 0, 0, 0],
-                        [0, 0, 0, 0, 0, 0],
-                        [0, 0, 0, 0.5, 0, 0],
-                        [0, 0, 0, 0, 0.5, 0],
-                        [0, 0, 0, 0, 0, 0.5],
-                        [0, 0, 0, 0, 0, 0],
-                        [0.3, 0, 0, 0, 0, 0.3],
-                        [0.3, 0, 0, 0, 0, 0.3]]
+train_action_sequence = [[0, 0, 0, 0, 0.3, 0]]
+test_action_sequence = [[0, 0, 0, 0, 0, 0]]
+
 
 while n < 1:
     # --- INITIALIZE ENVIRONMENTS ---
@@ -84,10 +63,11 @@ while n < 1:
 
         for agent_id in sim_steps.agent_id:
             # Extract velocity data            
-            sim_pos = sim_steps[agent_id].obs[0][3:6]
+            sim_pos = sim_steps[agent_id].obs[0][0:3]
+            sim_rot = sim_steps[agent_id].obs[0][3:7]
             #real_pos = real_steps[agent_id].obs[0][3:6]
-            sim_vel = sim_steps[agent_id].obs[0][6:12]
-            real_vel = real_steps[agent_id].obs[0][6:12]
+            sim_vel = sim_steps[agent_id].obs[0][7:13]
+            real_vel = real_steps[agent_id].obs[0][7:13]
 
             # Compute real and simulated accelerations
             real_acc = (real_vel - prev_real_vel)
@@ -109,6 +89,7 @@ while n < 1:
                 actions[:] = np.tile(train_action_sequence[current_action_index], (num_agents, 1)).astype(np.float32)
                 print(f"\nStep {step+1}")
                 print(f"Current actions:\n{actions}")
+            print(f"Positon:\n{sim_pos}")
             # Send actions to the environments
             action_tuple = ActionTuple(continuous=actions)
             env_sim.set_actions(behavior_name_sim, action_tuple)
