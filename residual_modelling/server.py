@@ -21,8 +21,8 @@ class MTGP(gpytorch.models.ExactGP):
         return gpytorch.distributions.MultitaskMultivariateNormal(mean_x, covar_x)
 
 def load_knn(path):
-    data = pickle.load(open(path,'rb'))
-    return data['knn'], data['scaler']
+    resknn = pickle.load(open(path,'rb'))
+    return resknn
 
 def load_gp(path):
     chk = torch.load(path)
@@ -38,7 +38,7 @@ def load_gp(path):
 
 def handle_client(conn, args):
     if args.model=='knn':
-        knn, scaler = load_knn(args.knn)
+        resknn = load_knn(args.knn)
     else:
         gp_model, likelihood, (mean, scale) = load_gp(args.gp)
         scaler = StandardScaler()
@@ -56,15 +56,20 @@ def handle_client(conn, args):
         inp = InputFeatures()
         inp.ParseFromString(data)
         feat = np.array(inp.features, dtype=np.float32).reshape(1,-1)
-        Xs = scaler.transform(feat)
+
+        print("[Python] Got features:", inp.features[:6], "...")       # show first 6 for brevity
 
         if args.model=='knn':
-            res = knn.predict(Xs)[0]
+            res = resknn.predict(feat)[0]
         else:
             xt = torch.tensor(Xs, dtype=torch.float32)
             with torch.no_grad(), gpytorch.settings.fast_pred_var():
                 out = gp_model(xt)
                 res = likelihood(out).mean.numpy()[0]
+        
+        print("[Python] Sending residuals:", res.tolist())
+
+
         out_msg = Prediction()
         out_msg.residuals.extend(res.tolist())
         out_b = out_msg.SerializeToString()
@@ -74,8 +79,8 @@ def handle_client(conn, args):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--model', choices=['knn','gp'], required=True)
-    p.add_argument('--knn', default='kl_server/knn_model.pkl')
-    p.add_argument('--gp', default='kl_server/gp_model.pth')
+    p.add_argument('--knn', default='knn_data.pkl')
+    p.add_argument('--gp', default='gp_model.pth')
     p.add_argument('--host', default='127.0.0.1')
     p.add_argument('--port', type=int, default=5005)
     args = p.parse_args()

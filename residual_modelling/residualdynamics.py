@@ -24,6 +24,7 @@ from mlagents_envs.base_env import ActionTuple
 
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 from scipy.spatial.transform import Rotation as R
 
@@ -199,13 +200,14 @@ def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
 #--------------------------------------
 
 def train_knn(data_x, data_y, k):
+    pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("knn",    KNeighborsRegressor(n_neighbors=5, weights="distance"))
+    ])
+    pipeline.fit(data_x, data_y)
     # scale, TODO check if better scaling is needed
-    scaler = StandardScaler()
-    data_x_scaled = scaler.fit_transform(data_x)  
 
-    knn = KNeighborsRegressor(n_neighbors=k, weights='distance', algorithm='auto') #sklearn knn
-    knn.fit(data_x_scaled, data_y)
-    return knn
+    return pipeline
 
 #--------------------------------------
 def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.02):
@@ -258,12 +260,12 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
 
 
             qs = np.array(sim_rot_q)  # OBS CHECK order = [x, y, z, w]
-            for i in range(len(qs)-1):
+            '''for i in range(len(qs)-1):
                 if np.dot(qs[i], qs[i+1]) < 0:
-                    qs[i+1] *= -1
+                    qs[i+1] *= -1'''
             rotations = R.from_quat(qs)
             euler = rotations.as_euler('xyz', degrees=False)
-            sim_rot = np.unwrap(euler, axis=0)
+            sim_rot = np.unwrap(euler)
             #OBS CHECK AXES
 
 
@@ -420,7 +422,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
 def main():
     k = 5
-    n_steps = 300
+    n_steps = 100
 
     data_x, data_y = [], []
     bag_dir = "../../ros2_ws2/src/saabmarineMEX_ros2/bags"  # path bags
@@ -465,7 +467,7 @@ def main():
 
         print("Running Unity simulation...")
         #nv_path = "envs/real_dynamic/prior_env3/prior.x86_64"
-        env_path = "envs/sitl_envs/v3/prior/prior.x86_64"
+        env_path = "envs/sitl_envs/v4/prior/prior.x86_64"
 
         result = run_simulation(scaled_ctrls, dt, dt_steps, pos_s, vel_s, acc_s, n_steps, env_path)
 
@@ -482,12 +484,16 @@ def main():
         data_x.append(result["data_x"])
         data_y.append(result["data_y"])
 
-    print("Saving dataset...")
-    with open("knn_data.pkl", "wb") as f:
-        pickle.dump((data_x, data_y), f)
+    data_x = np.vstack(data_x)
+    data_y = np.vstack(data_y)
 
     print("Training KNN...")
     knn = train_knn(data_x, data_y, k)
+    
+    print("Saving dataset...")
+    with open("knn_data.pkl", "wb") as f:
+        pickle.dump((knn), f)
+
 
     print("Testing KNN...")
     test_sample = data_x[:10]
