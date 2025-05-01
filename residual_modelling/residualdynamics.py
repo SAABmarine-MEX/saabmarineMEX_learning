@@ -24,6 +24,7 @@ from mlagents_envs.base_env import ActionTuple
 
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 from scipy.spatial.transform import Rotation as R
 
@@ -77,7 +78,7 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
             # Extract pose
             position = msg.pose.pose.position
             orientation = msg.pose.pose.orientation
-            channels = [channels[i] for i in [4, 5, 2, 1, 0, 3]]  # pitch, roll, z, yaw, x, y
+            #channels = [channels[i] for i in [4, 5, 2, 1, 0, 3]]  # pitch, roll, z, yaw, x, y
 
             data.append([
                 t,
@@ -97,6 +98,9 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
 
 def process_data(df):
     pos = df[["x", "y", "z"]].values
+    pos_zero = pos - pos[0:1, :]  
+
+
     quaternions = df[["qx", "qy", "qz", "qw"]].values
     timestamps = df["timestamp"].values.astype(np.float64)
 
@@ -118,18 +122,24 @@ def process_data(df):
     #input()
 
     # Linear kinematics
-    linear_vel = np.gradient(pos, axis=0) / dt[:, None]
-    linear_acc = np.gradient(linear_vel, axis=0) / dt[:, None]
+    linear_vel_world = np.gradient(pos, axis=0) / dt[:, None]
 
     # Angular kinematics from quaternion → euler
     rotations = R.from_quat(quaternions)
     euler_angles = rotations.as_euler('xyz', degrees=False)
+    euler_zero   = euler_angles - euler_angles[0:1, :]
+
+
+    linear_vel_local = rotations.inv().apply(linear_vel_world)
+    linear_acc = np.gradient(linear_vel_local, axis=0) / dt[:, None]
+
+
     angular_vel = np.gradient(euler_angles, axis=0) / dt[:, None]
     angular_acc = np.gradient(angular_vel, axis=0) / dt[:, None]
         # Combine into single arrays
 
-    positions = np.hstack([pos, euler_angles])   # (N, 6)
-    velocities = np.hstack([linear_vel, angular_vel])   # (N, 6)
+    positions = np.hstack([pos_zero, euler_zero])   # (N, 6)
+    velocities = np.hstack([linear_vel_local, angular_vel])   # (N, 6)
     accelerations = np.hstack([linear_acc, angular_acc])   # (N, 6)
     
     for i in range(len(df)):
@@ -190,13 +200,14 @@ def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
 #--------------------------------------
 
 def train_knn(data_x, data_y, k):
+    pipeline = Pipeline([
+    ("scaler", StandardScaler()),
+    ("knn",    KNeighborsRegressor(n_neighbors=5, weights="distance"))
+    ])
+    pipeline.fit(data_x, data_y)
     # scale, TODO check if better scaling is needed
-    scaler = StandardScaler()
-    data_x_scaled = scaler.fit_transform(data_x)  
 
-    knn = KNeighborsRegressor(n_neighbors=k, weights='distance', algorithm='auto') #sklearn knn
-    knn.fit(data_x_scaled, data_y)
-    return knn
+    return pipeline
 
 #--------------------------------------
 def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.02):
@@ -236,14 +247,28 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
         
         # go back one in current control to measure velocity after control input(next_vel-vel)
         if step == 0:
-            current_control=[0,0,0,0,0,0]
+            current_control=[0, 0, 0, 0, 0, 0]
         else:    
             current_control = scaled_controls[step-1]
 
         for agent_id in sim_steps.agent_id:
             sim_obs = sim_steps[agent_id].obs[0]
-            sim_pos_s = sim_obs[0:6]  # ned [vx, vy, vz, wx, wy, wz]
-            sim_vel_s = sim_obs[6:12]  # ned [vx, vy, vz, wx, wy, wz]
+            sim_pos_s = sim_obs[0:3]  # ned [x, y, z]
+            sim_rot_q = sim_obs[3:7]  #quaternions
+            sim_vel_s = sim_obs[7:13]  # ned [vx, vy, vz, wx, wy, wz]
+            
+
+
+            qs = np.array(sim_rot_q)  # OBS CHECK order = [x, y, z, w]
+            '''for i in range(len(qs)-1):
+                if np.dot(qs[i], qs[i+1]) < 0:
+                    qs[i+1] *= -1'''
+            rotations = R.from_quat(qs)
+            euler = rotations.as_euler('xyz', degrees=False)
+            sim_rot = np.unwrap(euler)
+            #OBS CHECK AXES
+
+
 
             sim_dt = sim_timestep * num_sim_steps
 
@@ -279,7 +304,7 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
             
             data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
             data_y.append(force_rescale)
-            sim_pos.append(sim_pos_s)
+            sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
             sim_vel.append(sim_vel_s)
             sim_acc.append(sim_acc_s)
             real_pos.append(real_pos_s)
@@ -330,31 +355,47 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
     x_axis = np.linspace(0, 100, timesteps)  # Race progress (%)
 
-    fig, axs = plt.subplots(3, num_dofs, figsize=(20, 10), sharex=True)
+    fig, axs = plt.subplots(4, num_dofs, figsize=(20, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
+
+    #change the actions
+    perm = [4, 5, 2, 1, 0, 3]
+    actions = actions[:, perm]
+
+
 
     for i in range(num_dofs):
         # actions
         axs[0, i].plot(x_axis, actions[:, i], color='tab:blue')
         axs[0, i].set_title(f'{dof_labels[i]}')
         if i == 0:
-            axs[0, i].set_ylabel("Action")
+            axs[0, i].set_ylabel("Action [PWM]")
 
         #Velocities (Sim vs Real)
         axs[1, i].plot(x_axis, sim_vel[:, i], label="Sim", color='tab:orange')
         axs[1, i].plot(x_axis, real_vel[:, i], label="Real", color='tab:green')
         if i == 0:
             axs[1, i].set_ylabel("Velocity [m/s]")
+        elif i == 3:
+            axs[1, i].set_ylabel("Velocity [rad/s]") 
 
         #Residuals
         axs[2, i].plot(x_axis, residuals[:, i], color='tab:red')
         if i == 0:
             axs[2, i].set_ylabel("Residual")
+        
+        #POS
+        axs[3, i].plot(x_axis, sim_pos[:, i], label="Sim", color='tab:orange')
+        axs[3, i].plot(x_axis, real_pos[:, i], label="Real", color='tab:green')
+        if i == 0:
+            axs[3, i].set_ylabel("Position [m]")
+        elif i == 3:
+            axs[3, i].set_ylabel("Position [rad]") 
 
         # Formatting
-        for j in range(3):
+        for j in range(4):
             axs[j, i].grid(True)
-            if j == 2:
+            if j == 3:
                 axs[j, i].set_xlabel("Race Progress [%]")
 
     # Add legend just once
@@ -381,16 +422,32 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
 def main():
     k = 5
-    n_steps = 50
+    n_steps = 100
 
     data_x, data_y = [], []
-    # Adjust path to match your rosbag folder
-    rosbag_folder = os.path.join(os.getcwd(), "../../ros2_ws2/src/saabmarineMEX_ros2/bags")  # or absolute path if needed
-    rosbag_paths = get_rosbag_paths(rosbag_folder)
+    bag_dir = "../../ros2_ws2/src/saabmarineMEX_ros2/bags"  # path bags
+    #rosbag_paths = get_rosbag_paths(rosbag_folder)
 
+    # wanted bags
+    bags = {
+        "rosbag2_2025_04_16-14_23_43",
+        "rosbag2_2025_04_16-14_28_40",
+        "rosbag2_2025_04_16-14_31_14",
+    }
 
+    rosbag_paths = []
+    for name in bags:
+        bag_folder = os.path.join(bag_dir, name)
+        db3 = os.path.join(bag_folder, f"{name}_0.db3")
+        if os.path.exists(db3):
+            rosbag_paths.append(db3)
+        else:
+            print(f"[!] No .db3 in {bag_folder} (expected {db3})")
     print(f"Found {len(rosbag_paths)} rosbag files.")
     input()
+
+
+
 
     for rosbag_path in rosbag_paths:
         if not os.path.exists(rosbag_path):
@@ -409,7 +466,9 @@ def main():
         acc_s = data["accelerations"]
 
         print("Running Unity simulation...")
-        env_path = "envs/real_dynamic/prior_env3/prior.x86_64"
+        #nv_path = "envs/real_dynamic/prior_env3/prior.x86_64"
+        env_path = "envs/sitl_envs/v4/prior/prior.x86_64"
+
         result = run_simulation(scaled_ctrls, dt, dt_steps, pos_s, vel_s, acc_s, n_steps, env_path)
 
         print(f"\nPlotting results for {rosbag_path}...\n")
@@ -425,12 +484,16 @@ def main():
         data_x.append(result["data_x"])
         data_y.append(result["data_y"])
 
-    print("Saving dataset...")
-    with open("knn_data.pkl", "wb") as f:
-        pickle.dump((data_x, data_y), f)
+    data_x = np.vstack(data_x)
+    data_y = np.vstack(data_y)
 
     print("Training KNN...")
     knn = train_knn(data_x, data_y, k)
+    
+    print("Saving dataset...")
+    with open("knn_data.pkl", "wb") as f:
+        pickle.dump((knn), f)
+
 
     print("Testing KNN...")
     test_sample = data_x[:10]
