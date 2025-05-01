@@ -1,0 +1,47 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1746027923",
+        "python_version": "3.10.12 (main, Jul  5 2023, 18:54:27) [GCC 11.2.0]",
+        "command_line_arguments": "/home/albin/anaconda3/envs/mla/bin/mlagents-learn config/Brov.yaml --run-id=TankHoops2",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.2.2+cpu",
+        "numpy_version": "1.23.5",
+        "end_time_seconds": "1746027933"
+    },
+    "total": 9.480911986000137,
+    "count": 1,
+    "self": 0.007304429000214441,
+    "children": {
+        "run_training.setup": {
+            "total": 0.05045374000110314,
+            "count": 1,
+            "self": 0.05045374000110314
+        },
+        "TrainerController.start_learning": {
+            "total": 9.42315381699882,
+            "count": 1,
+            "self": 0.00038409199987654574,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 9.422747934000654,
+                    "count": 1,
+                    "self": 9.422747934000654
+                },
+                "trainer_threads": {
+                    "total": 1.663000148255378e-06,
+                    "count": 1,
+                    "self": 1.663000148255378e-06
+                },
+                "TrainerController._save_models": {
+                    "total": 2.0127998141106218e-05,
+                    "count": 1,
+                    "self": 2.0127998141106218e-05
+                }
+            }
+        }
+    }
+}
