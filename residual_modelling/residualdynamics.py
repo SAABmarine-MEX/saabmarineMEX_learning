@@ -174,7 +174,7 @@ def process_data(df):
 #--------------------------------
 
 def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
-    class MultitaskGPModel(gpytorch.models.ExactGP):
+    class MTGP(gpytorch.models.ExactGP):
         def __init__(self, train_x, train_y, likelihood):
             super().__init__(train_x, train_y, likelihood)
             self.mean_module = gpytorch.means.MultitaskMean(
@@ -189,8 +189,15 @@ def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
             covar_x = self.covar_module(x)
             return gpytorch.distributions.MultitaskMultivariateNormal(mean_x, covar_x)
 
+    #scalar
+    scaler = StandardScaler().fit(train_x)
+    train_x_scaled = scaler.transform(train_x)
+
+    tx = torch.tensor(train_x_scaled, dtype=torch.float32)
+    ty = torch.tensor(train_y, dtype=torch.float32)
+
     likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=num_tasks)
-    model = MultitaskGPModel(train_x, train_y, likelihood)
+    model = MTGP(tx, ty, likelihood)
 
     model.train()
     likelihood.train()
@@ -200,20 +207,21 @@ def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
 
     for i in range(iters):
         optimizer.zero_grad()
-        output = model(train_x)
-        loss = -mll(output, train_y)
+        output = model(tx)
+        loss = -mll(output, ty)
         loss.backward()
         optimizer.step()
         print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}') 
 
-    return model, likelihood
+    model.eval(); likelihood.eval()
+    return model, likelihood, scaler
 
 #--------------------------------------
 
 def train_knn(data_x, data_y, k):
     pipeline = Pipeline([
     ("scaler", StandardScaler()),
-    ("knn",    KNeighborsRegressor(n_neighbors=5, weights="distance"))
+    ("knn",    KNeighborsRegressor(n_neighbors=k, weights="distance"))
     ])
     pipeline.fit(data_x, data_y)
     # scale, TODO check if better scaling is needed
@@ -231,7 +239,6 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
     real_acc = []
     rc=[]
 
-
     env_sim = UnityEnvironment(file_name=env_path, seed=1, worker_id=0, side_channels=[])
     env_sim.reset()
 
@@ -247,12 +254,10 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
         print(current_control)
         # Apply control at the start of this interval
         action = ActionTuple(continuous=np.array([current_control]))
-        #env_sim.set_actions(behavior_name, action)
 
         # Step the simulation for the full duration
         for _ in range(num_sim_steps):
             env_sim.set_actions(behavior_name, action)
-
             env_sim.step()
 
         # Get observation *after* simulation steps are completed
@@ -265,53 +270,28 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
             sim_pos_s = sim_obs[0:3]  # ned [x, y, z]
             sim_rot_q = sim_obs[3:7]  #quaternions
             sim_vel_s = sim_obs[7:13]  # ned [vx, vy, vz, wx, wy, wz]
-            
-
 
             qs = np.array(sim_rot_q)  # OBS CHECK order = [x, y, z, w]
-            '''for i in range(len(qs)-1):
-                if np.dot(qs[i], qs[i+1]) < 0:
-                    qs[i+1] *= -1'''
             rotations = R.from_quat(qs)
             euler = rotations.as_euler('xyz', degrees=False)
             sim_rot = np.unwrap(euler)
             #OBS CHECK AXES
 
-
-
             sim_dt = sim_timestep * num_sim_steps
-
             sim_acc_s = (sim_vel_s - prev_sim_vel) / sim_dt
 
             # Initialize rescale
-            #force_rescale = np.ones_like(real_acc)
             print("Sim vel:", sim_vel_s)
             print("Sim acc:", sim_acc_s)
             print("Real acc:", real_acc)
             print("Applied control:", current_control)
 
-            # Only rescale axes where control input is nonzero
-            '''for i in range(len(real_acc)):
-                if abs(real_acc[i]) < 0.01 and abs(sim_acc[i]) < 0.01:
-                    real_acc[i] = 0.01 
-                    sim_acc[i] = 0.01
-                elif abs(real_acc[i]) >= 0.01 and abs(sim_acc[i]) < 0.01:    
-                    sign = np.sign(sim_acc[i]) #
-                    if sign == 0:
-                        sign = np.sign(real_acc[i]) #
-                    sim_acc[i] += sign * 0.01
-                force_rescale[i] = real_acc[i] / (sim_acc[i])
-                print(f"\nAction {i+1}: Rescale = {force_rescale[i]:.6f}")'''
-
-                # else: leave rescale[i] = 0
-            #force_rescale = real_acc / (sim_acc + 1e-10)
             force_rescale = real_acc_s - sim_acc_s
             for i in range(len(force_rescale)):
                 print(f"\nAction {i+1}: Rescale = {force_rescale[i]:.6f}")
                 
             # Input: sim vel + acc + control | Output: force rescale
             
-
             sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
             sim_vel.append(sim_vel_s)
             sim_acc.append(sim_acc_s)
@@ -337,33 +317,15 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
         "controls": np.array(rc),
     }
 
-
 #--------------------------------------
 def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
-    '''
-    print("Input shapes:")
-    print(f"  actions:     {actions.shape}")
-    print(f"  sim_pos:     {sim_pos.shape}")
-    print(f"  real_pos:    {real_pos.shape}")
-    print(f"  sim_vel:     {sim_vel.shape}")
-    print(f"  real_vel:    {real_vel.shape}")
-    print(f"  residuals:   {residuals.shape}")
 
-    print("\nFirst row of each:")
-    print(f"  actions[0]:   {actions[0]}")
-    print(f"  sim_pos[0]:   {sim_pos[0]}")
-    print(f"  real_pos[0]:  {real_pos[0]}")
-    print(f"  sim_vel[0]:   {sim_vel[0]}")
-    print(f"  real_vel[0]:  {real_vel[0]}")
-    print(f"  residuals[0]: {residuals[0]}")
-    input()
-    '''
     # --- the rest of your function ---
     dof_labels = ['X', 'Y', 'Z', 'Roll', 'Pitch', 'Yaw']
     num_dofs = 6
     timesteps = actions.shape[0]
 
-    x_axis = np.linspace(0, 100, timesteps)  # Race progress (%)
+    x_axis = np.linspace(0, 100, timesteps)  #Race progress (%)
 
     fig, axs = plt.subplots(4, num_dofs, figsize=(20, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
@@ -371,8 +333,6 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
     #change the actions
     perm = [4, 5, 2, 1, 0, 3]
     actions = actions[:, perm]
-
-
 
     for i in range(num_dofs):
         # actions
@@ -402,7 +362,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
         elif i == 3:
             axs[3, i].set_ylabel("Position [rad]") 
 
-        # Formatting
+        #Formatting
         for j in range(4):
             axs[j, i].grid(True)
             if j == 3:
@@ -432,7 +392,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
 def main():
     k = 5
-    n_steps = 1000
+    n_steps = 100
 
     data_x, data_y = [], []
     bag_dir = "../../ros2_ws2/fixed_sync"  # path bags
@@ -456,9 +416,6 @@ def main():
             print(f"[!] No .db3 in {bag_folder} (expected {db3})")
     print(f"Found {len(rosbag_paths)} rosbag files.")
     input()
-
-
-
 
     for rosbag_path in rosbag_paths:
         if not os.path.exists(rosbag_path):
@@ -503,49 +460,22 @@ def main():
     
     print("Saving dataset...")
     with open("knn_data.pkl", "wb") as f:
-        pickle.dump((knn), f)
-
-
-    print("Testing KNN...")
-    test_sample = data_x[:10]
-    pred = knn.predict(test_sample)
+        pickle.dump(knn, f)
 
     # Train GP model
     print("Training GP model...")
-    train_x_tensor = torch.tensor(data_x, dtype=torch.float32)
-    train_y_tensor = torch.tensor(data_y, dtype=torch.float32)
+    gp_model, gp_likelihood, gp_scalar = train_multitask_gp(data_x, data_y, num_tasks=data_y.shape[1])
 
-    gp_model, gp_likelihood = train_multitask_gp(train_x_tensor, train_y_tensor, num_tasks=data_y.shape[1])
+    gp_checkpoint = {
+    "model_state":      gp_model.state_dict(),
+    "likelihood_state": gp_likelihood.state_dict(),
+    "scaler_mean":      gp_scalar.mean_,
+    "scaler_scale":     gp_scalar.scale_,
+    "num_tasks":        data_y.shape[1],
+    }
 
-    print("Testing GP...")
-    gp_model.eval()
-    gp_likelihood.eval()
-
-    with torch.no_grad(), gpytorch.settings.fast_pred_var():
-        test_x_tensor = torch.tensor(test_sample, dtype=torch.float32)
-        gp_prediction = gp_model(test_x_tensor)
-        gp_mean = gp_prediction.mean.numpy()
-
-    print("GP predicted scaling:", gp_mean)
-
-    # Optional: Compare side-by-side
-    print("\n--- Comparison ---")
-    print("KNN:", pred[0])
-    print("GP :", gp_mean[0])
-
-    plt.figure(figsize=(8, 4))
-    bar_width = 0.3
-    indices = np.arange(data_y.shape[1])
-
-    plt.bar(indices, pred[0], bar_width, label="KNN")
-    plt.bar(indices + bar_width, gp_mean[0], bar_width, label="GP")
-    plt.xticks(indices + bar_width / 2, [f"Action {i+1}" for i in range(data_y.shape[1])])
-    plt.ylabel("Predicted Scaling")
-    plt.title("KNN vs GP Prediction")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
+    print(f"Saving GP")
+    torch.save(gp_checkpoint, "gp.pth")
 
 if __name__ == "__main__":
     main()
