@@ -3,6 +3,16 @@ import socket, struct, threading, argparse
 import pickle, numpy as np
 import torch, gpytorch
 from model_pb2 import InputFeatures, Prediction
+import time
+
+# timing stuff
+#tmings = {}
+timings =[
+        [], # time to receive data
+        [], # time to send data
+        [], # time to run knn
+        ]
+
 
 #MTGP class (same as residualdynamic.py)
 class MTGP(gpytorch.models.ExactGP):
@@ -44,36 +54,72 @@ def handle_client(conn, args):
         scaler = StandardScaler()
         scaler.mean_, scaler.scale_ = mean, scale
 
-    while True:
-        raw = conn.recv(4)
-        if not raw: break
-        L = struct.unpack(">I", raw)[0]
-        data = b''
-        while len(data)<L:
-            chunk = conn.recv(L-len(data))
-            if not chunk: return
-            data += chunk
-        inp = InputFeatures()
-        inp.ParseFromString(data)
-        feat = np.array(inp.features, dtype=np.float32).reshape(1,-1)
+    try:
+        while True:
+            # Measure time of receiving data
+            
+            # Recieve data, feutures from the sim
+            raw = conn.recv(4)
+            if not raw: break
+            L = struct.unpack(">I", raw)[0]
+            data = b''
+            while len(data)<L:
+                chunk = conn.recv(L-len(data))
+                if not chunk: return
+                data += chunk
+            
+            start_recv = time.perf_counter()
+            inp = InputFeatures()
+            inp.ParseFromString(data)
+            feat = np.array(inp.features, dtype=np.float32).reshape(1,-1)
+            
+            end_recv = time.perf_counter()
+            diff_recv = end_recv - start_recv
+            timings[0].append(diff_recv)
+            print("[Python] Received features time:", diff_recv)
 
-        print("[Python] Got features:", inp.features[:6], "...")       # show first 6 for brevity
+            #print("[Python] Got features:", inp.features[:6], "...")       # show first 6 for brevity
 
-        if args.model=='knn':
-            res = resknn.predict(feat)[0]
-        else:
-            xt = torch.tensor(Xs, dtype=torch.float32)
-            with torch.no_grad(), gpytorch.settings.fast_pred_var():
-                out = gp_model(xt)
-                res = likelihood(out).mean.numpy()[0]
-        
-        print("[Python] Sending residuals:", res.tolist())
+            if args.model=='knn':
+                # time of knn inference
+                start_knn_inference = time.perf_counter()
+                res = resknn.predict(feat)[0]
+                end_knn_inference = time.perf_counter()
+                diff_knn_inference = end_knn_inference - start_knn_inference
+                timings[1].append(diff_knn_inference)
+                print("[Python] KNN inference time:", diff_knn_inference)
+            else:
+                # time of gp inference
+                start_gp_inference = time.perf_counter()
+                xt = torch.tensor(Xs, dtype=torch.float32)
+                with torch.no_grad(), gpytorch.settings.fast_pred_var():
+                    out = gp_model(xt)
+                    res = likelihood(out).mean.numpy()[0]
+                end_gp_inference = time.perf_counter()
+                diff_gp_inference = end_gp_inference - start_gp_inference
+                print("[Python] GP inference time:", diff_gp_inference)
 
 
-        out_msg = Prediction()
-        out_msg.residuals.extend(res.tolist())
-        out_b = out_msg.SerializeToString()
-        conn.sendall(struct.pack(">I", len(out_b)) + out_b)
+            
+            #print("[Python] Sending residuals:", res.tolist())
+
+            # Measure time of sending data
+            start_send = time.perf_counter()
+            out_msg = Prediction()
+            out_msg.residuals.extend(res.tolist())
+            out_b = out_msg.SerializeToString()
+            conn.sendall(struct.pack(">I", len(out_b)) + out_b)
+            end_send = time.perf_counter()
+            diff_send = end_send - start_send
+            timings[2].append(diff_send)
+            print("[Python] Sent residuals time:", diff_send)
+    finally:
+        means = [sum(block) / len(block) if block else 0 for block in timings]
+        print("Mean timings (in seconds):")
+        print(f"Receive: {means[0]:.6f}")
+        print(f"KNN:     {means[1]:.6f}")
+        print(f"Send:    {means[2]:.6f}")
+
     conn.close()
 
 def main():
