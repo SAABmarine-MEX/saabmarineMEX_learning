@@ -28,7 +28,7 @@ from sklearn.pipeline import Pipeline
 
 from scipy.spatial.transform import Rotation as R
 
-#----------------------defs------------------------------
+#----------------------------------------------------
 
 def get_rosbag_paths(parent_folder):
     rosbag_paths = []
@@ -78,19 +78,27 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
             # Extract pose
             position = msg.pose.pose.position
             orientation = msg.pose.pose.orientation
+            linvel = msg.twist.twist.linear
+            angvel = msg.twist.twist.angular
+
             #channels = [channels[i] for i in [4, 5, 2, 1, 0, 3]]  # pitch, roll, z, yaw, x, y
 
             data.append([
                 t,
                 position.x, position.y, position.z,
                 orientation.x, orientation.y, orientation.z, orientation.w,
+                linvel.x, linvel.y, linvel.z,
+                angvel.x,angvel.y,angvel.z,
                 channels
             ])
 
     df = pd.DataFrame(data, columns=[
-        "timestamp", "x", "y", "z", "qx", "qy", "qz", "qw",
+        "timestamp", 
+        "x", "y", "z", "qx", "qy", "qz", "qw",
+        "vx","vy","vz","wx","wy","wz",
         "channels"
     ])
+    print(df)
 
     df["timestamp"] = pd.to_numeric(df["timestamp"])
     return df
@@ -99,7 +107,8 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
 def process_data(df):
     pos = df[["x", "y", "z"]].values
     pos_zero = pos - pos[0:1, :]  
-
+    linvel = df[["vx","vy","vz"]].values
+    angvel = df[["wx","wy","wz"]].values    
 
     quaternions = df[["qx", "qy", "qz", "qw"]].values
     timestamps = df["timestamp"].values.astype(np.float64)
@@ -119,10 +128,10 @@ def process_data(df):
     print(f"\nMean dt: {np.mean(dt):.6f} s")
     print(f"Min dt: {np.min(dt):.6f} s")
     print(f"Max dt: {np.max(dt):.6f} s")
-    #input()
+    input()
 
     # Linear kinematics
-    linear_vel_world = np.gradient(pos, axis=0) / dt[:, None]
+    #linear_vel_world = np.gradient(pos, axis=0) / dt[:, None]
 
     # Angular kinematics from quaternion → euler
     rotations = R.from_quat(quaternions)
@@ -130,22 +139,24 @@ def process_data(df):
     euler_zero   = euler_angles - euler_angles[0:1, :]
 
 
-    linear_vel_local = rotations.inv().apply(linear_vel_world)
+    linear_vel_local = rotations.inv().apply(linvel)
     linear_acc = np.gradient(linear_vel_local, axis=0) / dt[:, None]
 
 
-    angular_vel = np.gradient(euler_angles, axis=0) / dt[:, None]
-    angular_acc = np.gradient(angular_vel, axis=0) / dt[:, None]
+    #angular_vel = np.gradient(euler_angles, axis=0) / dt[:, None]
+    angular_acc = np.gradient(angvel, axis=0) / dt[:, None]
         # Combine into single arrays
 
+    #acc = np.gradient(vel, axis=0) / dt[:, None]
+
     positions = np.hstack([pos_zero, euler_zero])   # (N, 6)
-    velocities = np.hstack([linear_vel_local, angular_vel])   # (N, 6)
-    accelerations = np.hstack([linear_acc, angular_acc])   # (N, 6)
+    vel = np.hstack([linear_vel_local, angvel])   # (N, 6)
+    acc = np.hstack([linear_acc, angular_acc])   # (N, 6)
     
     for i in range(len(df)):
         print(f"\nControls: {scaled_controls[i]}")
         print(f"\nPositions: {positions[i]}")
-        print(f"\nAccelerations: {accelerations[i]}")
+        print(f"\nAccelerations: {acc[i]}")
         #if i % 100 == 0:
             #input()
     #input()
@@ -154,9 +165,9 @@ def process_data(df):
         "scaled_controls": scaled_controls,
         "dt": dt,
         "steps": dt_steps,
-        "velocities": velocities,
+        "velocities": vel,
         #"euler_angles": euler_angles,
-        "accelerations": accelerations,
+        "accelerations": acc,
         "timestamps": timestamps
     }
 
@@ -236,20 +247,18 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
         print(current_control)
         # Apply control at the start of this interval
         action = ActionTuple(continuous=np.array([current_control]))
-        env_sim.set_actions(behavior_name, action)
+        #env_sim.set_actions(behavior_name, action)
 
         # Step the simulation for the full duration
         for _ in range(num_sim_steps):
+            env_sim.set_actions(behavior_name, action)
+
             env_sim.step()
 
         # Get observation *after* simulation steps are completed
         sim_steps, _ = env_sim.get_steps(behavior_name)
         
         # go back one in current control to measure velocity after control input(next_vel-vel)
-        if step == 0:
-            current_control=[0, 0, 0, 0, 0, 0]
-        else:    
-            current_control = scaled_controls[step-1]
 
         for agent_id in sim_steps.agent_id:
             sim_obs = sim_steps[agent_id].obs[0]
@@ -302,8 +311,7 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
                 
             # Input: sim vel + acc + control | Output: force rescale
             
-            data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
-            data_y.append(force_rescale)
+
             sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
             sim_vel.append(sim_vel_s)
             sim_acc.append(sim_acc_s)
@@ -311,6 +319,8 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
             real_vel.append(real_vel_s)
             real_acc.append(real_acc_s)
             rc.append(current_control)
+            data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
+            data_y.append(force_rescale)
 
             prev_sim_vel = sim_vel_s.copy()
     env_sim.close()
@@ -422,17 +432,18 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
 def main():
     k = 5
-    n_steps = 100
+    n_steps = 1000
 
     data_x, data_y = [], []
-    bag_dir = "../../ros2_ws2/src/saabmarineMEX_ros2/bags"  # path bags
+    bag_dir = "../../ros2_ws2/fixed_sync"  # path bags
     #rosbag_paths = get_rosbag_paths(rosbag_folder)
 
     # wanted bags
     bags = {
-        "rosbag2_2025_04_16-14_23_43",
-        "rosbag2_2025_04_16-14_28_40",
-        "rosbag2_2025_04_16-14_31_14",
+        "fixed_sync",
+        "fixed_sync_2",
+        "fixed_sync_3",
+        "fixed_sync_4"
     }
 
     rosbag_paths = []
