@@ -7,13 +7,13 @@ app = FastAPI()
 
 @app.post("/predict", response_class=Response)
 async def predict(request: Request):
-    # 1) Read the raw HTTP data (bytes)
-    data = await request.data()
+    # 1) Read the raw HTTP body (bytes)
+    body = await request.body()
 
     # 2) Parse into our protobuf msgutFeatures
     msg = model_pb2.InputFeatures()
     try:
-        msg.ParseFromString(data)
+        msg.ParseFromString(body)
     except Exception:
         # invalid bytes → 400 Bad Request
         raise HTTPException(status_code=400, detail="Invalid protobuf")
