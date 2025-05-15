@@ -35,11 +35,19 @@ gp_model     = None
 likelihood   = None
 gp_scalar    = None
 _model_choice= "knn"
-
-def load_models(model_choice, knn_path="knn_data.pkl", gp_path="gp.pth"):
-    global knn_model, gp_model, likelihood, gp_scalar, _model_choice
+_dof_choice  = "6"
+def load_models(model_choice, dof_choice):
+    global knn_model, gp_model, likelihood, gp_scalar, _model_choice, _dof_choice 
     _model_choice = model_choice
+    _dof_choice = dof_choice
 
+    if dof_choice == "6":
+        knn_path = "knn_6dof.pkl"
+        gp_path = "gp_6dof.pkl"
+    else:
+        knn_path = "knn_3dof.pkl"
+        gp_path = "gp_3dof.pkl"
+    
     if model_choice == "knn":
         print(f"[startup] Loading KNN from {knn_path}")
         with open(knn_path, "rb") as f:
@@ -108,6 +116,10 @@ if __name__=="__main__":
         help="Which model to serve (default: knn)"
     )
     parser.add_argument(
+        "--dof", choices=["3","6"], default="6",
+        help="How many DOF for the model (default: 6)"
+    )
+    parser.add_argument(
         "--host", default="0.0.0.0",
         help="Host to bind"
     )
@@ -122,7 +134,7 @@ if __name__=="__main__":
     args = parser.parse_args()
 
     # Load once at startup
-    load_models(args.model)
+    load_models(args.model, args.dof)
 
     # Start Uvicorn
     import uvicorn

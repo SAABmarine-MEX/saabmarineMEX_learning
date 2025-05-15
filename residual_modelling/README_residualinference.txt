@@ -1,3 +1,6 @@
+
+# OBS OUTDATED
+
 # README Python <-> Unity 
 
 # install in correct vm with your paths (may be overkill)

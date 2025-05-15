@@ -1,5 +1,4 @@
 #---imports---
-
 import os
 import glob
 import numpy as np
@@ -40,7 +39,7 @@ def get_rosbag_paths(parent_folder):
             # Look for .db3 files in the subfolder
             db3_files = glob.glob(os.path.join(full_path, "*.db3"))
             if db3_files:
-                rosbag_paths.append(db3_files[0])  # Assume first .db3 file is the main one
+                rosbag_paths.append(db3_files[0]) 
 
     rosbag_paths.sort()
     return rosbag_paths
@@ -81,8 +80,6 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
             linvel = msg.twist.twist.linear
             angvel = msg.twist.twist.angular
 
-            #channels = [channels[i] for i in [4, 5, 2, 1, 0, 3]]  # pitch, roll, z, yaw, x, y
-
             data.append([
                 t,
                 position.x, position.y, position.z,
@@ -98,77 +95,105 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
         "vx","vy","vz","wx","wy","wz",
         "channels"
     ])
-    print(df)
-
     df["timestamp"] = pd.to_numeric(df["timestamp"])
+
     return df
 #------------------------------
+def process_data(df, bin_size=0.2, sim_timestep=0.02):
 
-def process_data(df):
-    pos = df[["x", "y", "z"]].values
-    pos_zero = pos - pos[0:1, :]  
-    linvel = df[["vx","vy","vz"]].values
-    angvel = df[["wx","wy","wz"]].values    
+    # Extract raw data
+    pos = df[['x', 'y', 'z']].values
+    # Zero positions at t=0
+    pos_zero = pos - pos[0:1, :]
 
-    quaternions = df[["qx", "qy", "qz", "qw"]].values
-    timestamps = df["timestamp"].values.astype(np.float64)
+    # Raw velocities and angular velocities
+    linvel = df[['vx', 'vy', 'vz']].values
+    angvel = df[['wx', 'wy', 'wz']].values
 
-    control_inputs = np.vstack(df["channels"].values)
+    # Compute local linear velocities in body frame
+    quats = df[['qx', 'qy', 'qz', 'qw']].values
+    rotations = R.from_quat(quats)
+    linvel_local = rotations.inv().apply(linvel)
+
+    # Stack velocity vectors (6 DOF)
+    vel = np.hstack([linvel_local, angvel])
+
+    # Euler angles zeroed at t=0
+    euler = rotations.as_euler('xyz', degrees=False)
+    euler_zero = euler - euler[0:1, :]
+
+    # Combined position+orientation state (6D)
+    positions = np.hstack([pos_zero, euler_zero])
+
+    # Scale control inputs
+    control_inputs = np.vstack(df['channels'].values)
     scaled_controls = (control_inputs - 1500.0) / 400.0
-    scaled_controls[2] *=-1
-    # Time delta in seconds
-    dt = np.gradient(timestamps) / 1e9
-    
-    # Steps between each data point (assuming nominal step = 0.02s)
-    dt_steps = np.round(dt / 0.02).astype(int)
+    # Invert Z channel if needed
+    scaled_controls[:, 2] *= -1
 
-    # Print timing info
-    #print("Time between control steps (in seconds):")
-    #print(dt)
-    print(f"\nMean dt: {np.mean(dt):.6f} s")
-    print(f"Min dt: {np.min(dt):.6f} s")
-    print(f"Max dt: {np.max(dt):.6f} s")
-    input()
+    # Raw timestamps in ns
+    timestamps = df['timestamp'].values.astype(np.float64)
 
-    # Linear kinematics
-    #linear_vel_world = np.gradient(pos, axis=0) / dt[:, None]
+    # Prepare buffers for time-based binning
+    agg_pos = []
+    agg_ctrl = []
+    agg_vel = []
+    agg_ts = []
 
-    # Angular kinematics from quaternion → euler
-    rotations = R.from_quat(quaternions)
-    euler_angles = rotations.as_euler('xyz', degrees=False)
-    euler_zero   = euler_angles - euler_angles[0:1, :]
+    # Buffers
+    pos_buf = []
+    ctrl_buf = []
+    vel_buf = []
 
+    bin_start = timestamps[0]
+    for t, p, u, v in zip(timestamps, positions, scaled_controls, vel):
+        pos_buf.append(p)
+        ctrl_buf.append(u)
+        vel_buf.append(v)
 
-    linear_vel_local = rotations.inv().apply(linvel)
-    linear_acc = np.gradient(linear_vel_local, axis=0) / dt[:, None]
+        # Check if bin duration reached
+        if (t - bin_start) >= bin_size * 1e9:
+            # Aggregate by averaging
+            agg_pos.append(np.mean(pos_buf, axis=0))
+            agg_ctrl.append(np.mean(ctrl_buf, axis=0))
+            agg_vel.append(np.mean(vel_buf, axis=0))
+            # Use bin start time for timestamp
+            agg_ts.append(bin_start)
 
+            # Reset buffers
+            bin_start = t
+            pos_buf.clear()
+            ctrl_buf.clear()
+            vel_buf.clear()
 
-    #angular_vel = np.gradient(euler_angles, axis=0) / dt[:, None]
-    angular_acc = np.gradient(angvel, axis=0) / dt[:, None]
-        # Combine into single arrays
+    # Convert lists to arrays
+    agg_positions  = np.vstack(agg_pos)
+    agg_controls   = np.vstack(agg_ctrl)
+    agg_velocities = np.vstack(agg_vel)
+    agg_timestamps = np.array(agg_ts)
 
-    #acc = np.gradient(vel, axis=0) / dt[:, None]
+    # Compute true dt between bins (in seconds)
+    dt = np.diff(agg_timestamps, prepend=agg_timestamps[0]) / 1e9
+    dt[0] = dt[1]
 
-    positions = np.hstack([pos_zero, euler_zero])   # (N, 6)
-    vel = np.hstack([linear_vel_local, angvel])   # (N, 6)
-    acc = np.hstack([linear_acc, angular_acc])   # (N, 6)
-    
-    for i in range(len(df)):
-        print(f"\nControls: {scaled_controls[i]}")
-        print(f"\nPositions: {positions[i]}")
-        print(f"\nAccelerations: {acc[i]}")
-        #if i % 100 == 0:
-            #input()
+    # Every bin spans ~bin_size seconds --> fixed sim steps
+    steps = np.full(len(dt), int(round(bin_size / sim_timestep)), dtype=int)
+    #print(steps)
+    # Compute accelerations from velocities
+    # accel[i] = (vel[i] - vel[i-1]) / dt[i]
+    acc = np.diff(agg_velocities, axis=0) / dt[1:, None]
+    # Prepend first accel to match length
+    acc = np.vstack([acc[0], acc])
+    #print(len(steps))
     #input()
     return {
-        "positions": positions,
-        "scaled_controls": scaled_controls,
-        "dt": dt,
-        "steps": dt_steps,
-        "velocities": vel,
-        #"euler_angles": euler_angles,
-        "accelerations": acc,
-        "timestamps": timestamps
+        'positions':    agg_positions,
+        'scaled_controls': agg_controls,
+        'dt':           dt,
+        'steps':        steps,
+        'velocities':   agg_velocities,
+        'accelerations': acc,
+        'timestamps':   agg_timestamps
     }
 
 #--------------------------------
@@ -211,7 +236,7 @@ def train_multitask_gp(train_x, train_y, num_tasks, lr=0.1, iters=500):
         loss = -mll(output, ty)
         loss.backward()
         optimizer.step()
-        print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}') 
+        #print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}') 
 
     model.eval(); likelihood.eval()
     return model, likelihood, scaler
@@ -243,28 +268,26 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
     env_sim.reset()
 
     behavior_name = list(env_sim.behavior_specs.keys())[0]
-    prev_sim_vel = np.zeros(6)
+    prev_sim_vel = vel[0]
 
     for step in range(n_steps):
-        current_control = scaled_controls[step]
-        real_pos_s = pos[step]
-        real_vel_s = vel[step]
-        real_acc_s = accelerations[step]
-        num_sim_steps = max(1, dt_steps[step])
-        print(current_control)
-        # Apply control at the start of this interval
+        current_control = scaled_controls[step]        
+        #if step > 1:
+        real_pos_s = pos[step + 1]
+        real_vel_s = vel[step + 1]
+        real_acc_s = accelerations[step + 1]
+        num_sim_steps = dt_steps[step]
+
+        #apply control
         action = ActionTuple(continuous=np.array([current_control]))
 
         # Step the simulation for the full duration
-        for _ in range(num_sim_steps):
+        for _ in range(2):
             env_sim.set_actions(behavior_name, action)
             env_sim.step()
 
         # Get observation *after* simulation steps are completed
         sim_steps, _ = env_sim.get_steps(behavior_name)
-        
-        # go back one in current control to measure velocity after control input(next_vel-vel)
-
         for agent_id in sim_steps.agent_id:
             sim_obs = sim_steps[agent_id].obs[0]
             sim_pos_s = sim_obs[0:3]  # ned [x, y, z]
@@ -281,30 +304,26 @@ def run_simulation(scaled_controls, dt, dt_steps, pos, vel, accelerations, n_ste
             sim_acc_s = (sim_vel_s - prev_sim_vel) / sim_dt
 
             # Initialize rescale
-            print("Sim vel:", sim_vel_s)
-            print("Sim acc:", sim_acc_s)
-            print("Real acc:", real_acc)
-            print("Applied control:", current_control)
-
-            force_rescale = real_acc_s - sim_acc_s
-            for i in range(len(force_rescale)):
-                print(f"\nAction {i+1}: Rescale = {force_rescale[i]:.6f}")
+            
+            if step > 0:
+                force_rescale = real_acc_s - sim_acc_s
+                # for i in range(len(force_rescale)):
+                #     print(f"\nAction {i+1}: Rescale = {force_rescale[i]:.6f}")
                 
             # Input: sim vel + acc + control | Output: force rescale
-            
-            sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
-            sim_vel.append(sim_vel_s)
-            sim_acc.append(sim_acc_s)
-            real_pos.append(real_pos_s)
-            real_vel.append(real_vel_s)
-            real_acc.append(real_acc_s)
-            rc.append(current_control)
-            data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
-            data_y.append(force_rescale)
+                sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
+                sim_vel.append(sim_vel_s)
+                sim_acc.append(sim_acc_s)
+                real_pos.append(real_pos_s)
+                real_vel.append(real_vel_s)
+                real_acc.append(real_acc_s)
+                rc.append(current_control)
+                data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
+                data_y.append(force_rescale)
 
             prev_sim_vel = sim_vel_s.copy()
     env_sim.close()
-    #input()
+
     return {
         "data_x": np.array(data_x),
         "data_y": np.array(data_y),
@@ -327,7 +346,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
     x_axis = np.linspace(0, 100, timesteps)  #Race progress (%)
 
-    fig, axs = plt.subplots(4, num_dofs, figsize=(20, 10), sharex=True)
+    fig, axs = plt.subplots(3, num_dofs, figsize=(20, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
 
     #change the actions
@@ -355,17 +374,17 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
             axs[2, i].set_ylabel("Residual")
         
         #POS
-        axs[3, i].plot(x_axis, sim_pos[:, i], label="Sim", color='tab:orange')
-        axs[3, i].plot(x_axis, real_pos[:, i], label="Real", color='tab:green')
-        if i == 0:
-            axs[3, i].set_ylabel("Position [m]")
-        elif i == 3:
-            axs[3, i].set_ylabel("Position [rad]") 
+        # axs[3, i].plot(x_axis, sim_pos[:, i], label="Sim", color='tab:orange')
+        # axs[3, i].plot(x_axis, real_pos[:, i], label="Real", color='tab:green')
+        # if i == 0:
+        #     axs[3, i].set_ylabel("Position [m]")
+        # elif i == 3:
+        #     axs[3, i].set_ylabel("Position [rad]") 
 
         #Formatting
-        for j in range(4):
+        for j in range(3):
             axs[j, i].grid(True)
-            if j == 3:
+            if j == 2:
                 axs[j, i].set_xlabel("Race Progress [%]")
 
     # Add legend just once
@@ -392,18 +411,17 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals):
 
 def main():
     k = 5
-    n_steps = 100
+    n_steps = 210
+    bag_dir = "../../brov_tank_bags2"  # path bags
 
-    data_x, data_y = [], []
-    bag_dir = "../../ros2_ws2/fixed_sync"  # path bags
-    #rosbag_paths = get_rosbag_paths(rosbag_folder)
 
+    data_x = []
+    data_y = []
     # wanted bags
+    #3dof
     bags = {
-        "fixed_sync",
-        "fixed_sync_2",
-        "fixed_sync_3",
-        "fixed_sync_4"
+        "rosbag2_2025_05_14-17_12_31", 
+        "rosbag2_2025_05_14-17_37_39"
     }
 
     rosbag_paths = []
@@ -415,13 +433,12 @@ def main():
         else:
             print(f"[!] No .db3 in {bag_folder} (expected {db3})")
     print(f"Found {len(rosbag_paths)} rosbag files.")
-    input()
+    # input()
 
     for rosbag_path in rosbag_paths:
         if not os.path.exists(rosbag_path):
             print(f"[!] Skipping missing ROS Bag: {rosbag_path}")
             continue
-        #rosbag_path = os.path.join(os.getcwd(), "../../ros2_ws2/src/saabmarineMEX_ros2/bags/rosbag2_2025_04_09-12_37_45/rosbag2_2025_04_09-12_37_45_0.db3")
         print(f"Processing: {rosbag_path}")
         df = load_rosbag(rosbag_path)
         data = process_data(df)
@@ -434,8 +451,8 @@ def main():
         acc_s = data["accelerations"]
 
         print("Running Unity simulation...")
-        #nv_path = "envs/real_dynamic/prior_env3/prior.x86_64"
-        env_path = "envs/sitl_envs/v4/prior/prior.x86_64"
+
+        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
 
         result = run_simulation(scaled_ctrls, dt, dt_steps, pos_s, vel_s, acc_s, n_steps, env_path)
 
@@ -455,15 +472,11 @@ def main():
     data_x = np.vstack(data_x)
     data_y = np.vstack(data_y)
 
-    print("Training KNN...")
+    print("Training KNN 3dof...")
     knn = train_knn(data_x, data_y, k)
-    
-    print("Saving dataset...")
-    with open("knn_data.pkl", "wb") as f:
-        pickle.dump(knn, f)
 
     # Train GP model
-    print("Training GP model...")
+    print("Training GP 3dof...")
     gp_model, gp_likelihood, gp_scalar = train_multitask_gp(data_x, data_y, num_tasks=data_y.shape[1])
 
     gp_checkpoint = {
@@ -474,8 +487,92 @@ def main():
     "num_tasks":        data_y.shape[1],
     }
 
-    print(f"Saving GP")
-    torch.save(gp_checkpoint, "gp.pth")
+    print("Saving KNN 3dof...")
+    with open("knn_3dof.pkl", "wb") as f:
+        pickle.dump(knn, f)
+
+    print(f"Saving GP 3d0f")
+    torch.save(gp_checkpoint, "gp_3dof.pth")
+#-----------------------------6DOF-------------------------------------------
+    data_x = []
+    data_y = []
+    # wanted bags
+    #6dof
+    bags = {
+        "rosbag2_2025_05_14-17_20_40", 
+        "rosbag2_2025_05_14-17_41_18"
+    }
+    
+    rosbag_paths = []
+    for name in bags:
+        bag_folder = os.path.join(bag_dir, name)
+        db3 = os.path.join(bag_folder, f"{name}_0.db3")
+        if os.path.exists(db3):
+            rosbag_paths.append(db3)
+        else:
+            print(f"[!] No .db3 in {bag_folder} (expected {db3})")
+    print(f"Found {len(rosbag_paths)} rosbag files.")
+    #input()
+
+    for rosbag_path in rosbag_paths:
+        if not os.path.exists(rosbag_path):
+            print(f"[!] Skipping missing ROS Bag: {rosbag_path}")
+            continue
+        print(f"Processing: {rosbag_path}")
+        df = load_rosbag(rosbag_path)
+        data = process_data(df)
+        
+        pos_s = data["positions"]
+        scaled_ctrls = data["scaled_controls"]
+        dt = data["dt"] #time between data
+        dt_steps = data["steps"] #steps per dt
+        vel_s = data["velocities"]
+        acc_s = data["accelerations"]
+
+        print("Running Unity simulation...")
+
+        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
+
+        result = run_simulation(scaled_ctrls, dt, dt_steps, pos_s, vel_s, acc_s, n_steps, env_path)
+
+        print(f"\nPlotting results for {rosbag_path}...\n")
+        plot_all(
+            result["controls"],
+            result["sim_pos"],
+            result["real_pos"],
+            result["sim_vel"],
+            result["real_vel"],
+            result["data_y"]
+        )
+
+        data_x.append(result["data_x"])
+        data_y.append(result["data_y"])
+
+    data_x = np.vstack(data_x)
+    data_y = np.vstack(data_y)
+
+    print("Training KNN 6dof...")
+    knn = train_knn(data_x, data_y, k)
+    
+    print("Saving knn 6dof")
+    with open("knn_6dof.pkl", "wb") as f:
+        pickle.dump(knn, f)
+
+    # Train GP model
+    print("Training GP 6dof...")
+    gp_model, gp_likelihood, gp_scalar = train_multitask_gp(data_x, data_y, num_tasks=data_y.shape[1])
+
+    gp_checkpoint = {
+    "model_state":      gp_model.state_dict(),
+    "likelihood_state": gp_likelihood.state_dict(),
+    "scaler_mean":      gp_scalar.mean_,
+    "scaler_scale":     gp_scalar.scale_,
+    "num_tasks":        data_y.shape[1],
+    }
+
+    print(f"Saving GP 6dof")
+    torch.save(gp_checkpoint, "gp_6dof.pth")
+
 
 if __name__ == "__main__":
     main()
