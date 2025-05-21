@@ -12,20 +12,34 @@ import model_pb2
 # ─────────────────────────────────────────────────────────────────────────────
 class MTGP(gpytorch.models.ExactGP):
     def __init__(self, train_x, train_y, likelihood):
+        num_tasks = train_y.shape[1]
+        
         super().__init__(train_x, train_y, likelihood)
-        num_tasks = likelihood.num_tasks
         self.mean_module = gpytorch.means.MultitaskMean(
-            gpytorch.means.ConstantMean(), num_tasks=num_tasks
-        )
+            gpytorch.means.ConstantMean(), num_tasks=num_tasks)
+        
         self.covar_module = gpytorch.kernels.MultitaskKernel(
-            gpytorch.kernels.RBFKernel(), num_tasks=num_tasks, rank=1
-        )
+            gpytorch.kernels.RBFKernel(), num_tasks=num_tasks, rank=1)
+
+        # super().__init__(train_x, train_y, likelihood)
+        # D = train_x.shape[1]
+
+        # self.mean_module = gpytorch.means.MultitaskMean(
+        # gpytorch.means.ConstantMean(), num_tasks=num_tasks)  
+        
+        # const_kern = gpytorch.kernels.ConstantKernel()
+        # lin_kern   = gpytorch.kernels.LinearKernel(ard_num_dims=D)
+        # matern_kern = gpytorch.kernels.ScaleKernel(gpytorch.kernels.MaternKernel(nu=2.5, ard_num_dims=D))
+
+        # base_covar = const_kern + lin_kern + matern_kern
+
+        # self.covar_module = gpytorch.kernels.MultitaskKernel(
+        #     base_covar, num_tasks=num_tasks, rank=1)
 
     def forward(self, x):
         mean_x = self.mean_module(x)
         covar_x = self.covar_module(x)
         return gpytorch.distributions.MultitaskMultivariateNormal(mean_x, covar_x)
-
 # ─────────────────────────────────────────────────────────────────────────────
 
 app = FastAPI()
@@ -36,17 +50,22 @@ likelihood   = None
 gp_scalar    = None
 _model_choice= "knn"
 _dof_choice  = "6"
+
+weight = np.array([1]*6 +[1]*6 + [1]*6, dtype=np.float32)
+
+# -------------------------------------
 def load_models(model_choice, dof_choice):
-    global knn_model, gp_model, likelihood, gp_scalar, _model_choice, _dof_choice 
+    global knn_model, gp_model, likelihood, gp_scalar, _model_choice, _dof_choice, weight
+
     _model_choice = model_choice
     _dof_choice = dof_choice
 
     if dof_choice == "6":
         knn_path = "knn_6dof.pkl"
-        gp_path = "gp_6dof.pkl"
+        gp_path = "gp_6dof.pth"
     else:
         knn_path = "knn_3dof.pkl"
-        gp_path = "gp_3dof.pkl"
+        gp_path = "gp_3dof.pth"
     
     if model_choice == "knn":
         print(f"[startup] Loading KNN from {knn_path}")
@@ -59,13 +78,17 @@ def load_models(model_choice, dof_choice):
 
         # rebuild GP
         n_out=int(chk["num_tasks"])
-        print(f"[startup] GP has {n_out} dimensions")
+        #print(f"[startup] GP has {n_out} dimensions")
         gp_scalar = StandardScaler()
         gp_scalar.mean_, gp_scalar.scale_ = (chk["scaler_mean"], chk["scaler_scale"])    
 
         likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=n_out)
 
-        gp_model = MTGP(None, None, likelihood)
+        #to get the right shapes
+        input_dim = weight.shape[0]
+        dummy_x = torch.zeros(1, input_dim)
+        dummy_y = torch.zeros(1, n_out)
+        gp_model = MTGP(dummy_x, dummy_y, likelihood)
 
         gp_model.load_state_dict(chk["model_state"])
         likelihood.load_state_dict(chk["likelihood_state"])
@@ -74,11 +97,13 @@ def load_models(model_choice, dof_choice):
         likelihood.eval()
 
 def model_predict(features: list[float]) -> list[float]:
+    print(_model_choice + _dof_choice)
     X = np.array(features, dtype=np.float32).reshape(1, -1)
     if _model_choice == "knn":
         return knn_model.predict(X)[0].tolist()
     else:
         Xs = gp_scalar.transform(X)
+        Xs = Xs * weight
         xt = torch.tensor(Xs)
         with torch.no_grad(), gpytorch.settings.fast_pred_var():
             out = likelihood(gp_model(xt)).mean.numpy()[0]
@@ -101,9 +126,7 @@ def com(body: bytes = Body(..., media_type="application/octet-stream")):
     #serialize
     data = out.SerializeToString()
 
-
     return Response(content=data, media_type="application/octet-stream")
-
 
 #-------------------------MAIN---------------------------#
 
