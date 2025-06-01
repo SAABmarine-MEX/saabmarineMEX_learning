@@ -1,0 +1,6 @@
+README.md
+setup.py
+residual_modelling.egg-info/PKG-INFO
+residual_modelling.egg-info/SOURCES.txt
+residual_modelling.egg-info/dependency_links.txt
+residual_modelling.egg-info/top_level.txt
