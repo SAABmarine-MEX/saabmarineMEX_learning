@@ -100,7 +100,7 @@ if __name__ == '__main__':
     parser.add_option("--gp_inputs", dest="gp_inputs",
                   default="di", help="di or ui inputs for training.")
     parser.add_option("--survey_name", dest="survey_name",
-                  default="../../../results/svgp/", help="Name for folder to store results.")
+                  default="../../results/svgp/", help="Name for folder to store results.")
     parser.add_option("--dof", dest="gp_dof",
                   default="x", help="Which dof to train; 'x', 'y', 'z', 'roll', 'pitch', 'yaw' or 'all'.")
 
