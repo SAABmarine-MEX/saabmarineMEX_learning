@@ -9,7 +9,7 @@ from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.mlls import VariationalELBO, PredictiveLogLikelihood, ExactMarginalLogLikelihood
 import gpytorch.settings
-from convergence import ExpMAStoppingCriterion
+from .convergence import ExpMAStoppingCriterion
 #from gp_mapping.convergence import ExpMAStoppingCriterion
 import matplotlib.pyplot as plt
 
@@ -149,7 +149,7 @@ class RGP(ExactGP):
 
 class SVGP(VariationalGP):
 
-    def __init__(self, n_inducing, n_inputs):
+    def __init__(self, n_inducing=400, n_inputs=18): # TODO: make this more dynamic. "dummy and override"
 
         # number of inducing points and optimisation samples
         assert isinstance(n_inducing, int)
@@ -188,9 +188,10 @@ class SVGP(VariationalGP):
         v = self.cov(input)
         return MultivariateNormal(m, v)
 
-    def fit(self, inputs, targets, covariances=None, n_samples=5000, max_iter=10000, 
-            learning_rate=1e-3, rtol=1e-4, n_window=100, auto=True, verbose=True):
-
+    #def fit(self, inputs, targets, covariances=None, n_samples=5000, max_iter=10000,
+    #        learning_rate=1e-3, rtol=1e-4, n_window=100, auto=True, verbose=True):
+    def fit(self, inputs, targets, covariances=None, n_samples=1000, max_iter=1000,
+            learning_rate=1e-1, rtol=1e-12, n_window=200, auto=False, verbose=True):
         '''
         Optimises the hyperparameters of the GP kernel and likelihood.
         inputs: (nx2) numpy array
@@ -427,6 +428,8 @@ class SVGP(VariationalGP):
         fig.savefig(fname, bbox_inches='tight', dpi=1000)
         
     def save(self, fname):
+        if '.pth' not in fname:
+            fname += '.pth'
         torch.save(self.state_dict(), fname)
 
     @classmethod
@@ -435,3 +438,27 @@ class SVGP(VariationalGP):
         gp.load_state_dict(torch.load(fname))
         return gp
 
+    def predict(self, tx):
+        '''
+        Predicts the output for the given input tx.
+        tx: (n, n_inputs) numpy array of inputs
+        returns:
+            yhat: (n,) numpy array of predicted outputs
+        '''
+
+        # sanity
+        assert tx.shape[1] == self.n_inputs
+
+        # toggle evaluation mode
+        self.likelihood.eval()
+        self.eval()
+        torch.cuda.empty_cache()
+
+        # predict
+        with torch.no_grad(), gpytorch.settings.fast_pred_var():
+            tx = torch.from_numpy(tx).to(self.device).float()
+            yhat = self.likelihood(self(tx)).mean.cpu().numpy()
+
+        return yhat
+
+    # def save finns redan

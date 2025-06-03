@@ -450,7 +450,7 @@ def runandanalyze(bag_paths, n_steps, model, dof):
 
     for bag in bag_paths:
 
-        print(f"Processing: {bag}")    
+        print(f"Processing: {bag}")
         df = load_rosbag(bag)
         data = process_data(df)
         total_bins = data["scaled_controls"].shape[0]

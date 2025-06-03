@@ -7,76 +7,58 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
 
-def train_knn(data_x, data_y, k, w):
-    pipeline = Pipeline([
-    ("scaler", StandardScaler()),
-    ("knn",    KNeighborsRegressor(n_neighbors=k, weights="uniform"))
-    ])
-    pipeline.fit(data_x, data_y)
-    # scale, TODO check if better scaling is needed
+class KNN:
+    def __init__(self, k=5, weight=None):
+        self.k = k
+        self.weight = weight
 
-    return pipeline
-
-
-def tune_knn(X_train, y_train, X_val, y_val, w):
-    best_rmse = np.inf
-    best_cfg  = None
-
-    for k in range(3,11):
-        for p in (1,2):
-            knn = Pipeline([
-                ("scaler", StandardScaler()),
-                ("weight", w),
-                ("knn",    KNeighborsRegressor(n_neighbors=k, p=p, weights="uniform"))
-            ])
-            knn.fit(X_train, y_train)
-            yhat = knn.predict(X_val)
-            rmse = np.sqrt(np.mean((yhat - y_val)**2))
-            if rmse < best_rmse:
-                best_rmse = rmse
-                best_cfg = (k,p)
-
-    print(f"Best (k,p)={best_cfg} with RMSE={best_rmse:.4f}")
-
-    k_opt, p_opt = best_cfg
-    final_knn = Pipeline([
-        ("scaler", StandardScaler()),
-        ("knn",    KNeighborsRegressor(
-                    n_neighbors=k_opt,
-                    p=p_opt,
-                    weights="uniform"))
-                        ])
-    final_knn.fit(X_train, y_train)
-
-    return final_knn
+    def fit(self, data_x, data_y, weight=None): # weight_tf = FunctionTransformer(lambda X: X * weight, validate=True)
+        self.pipeline = Pipeline([
+            ("scaler", StandardScaler()),
+            ("knn", KNeighborsRegressor(n_neighbors=self.k, weights="uniform"))
+        ])
+        self.pipeline.fit(data_x, data_y)
+        # scale, TODO: check if better scaling is needed
 
 
-def main():
-    k = 5  # Number of neighbors
-    weight = np.array([1]*6 +[1]*6 + [1]*6, dtype=np.float32)
-    weight_tf = FunctionTransformer(lambda X: X * weight, validate=True)
+    def predict(self, data_x):
+        return self.pipeline.predict(data_x)
 
-    print("Loading data...")
-    data_dir = "../../data/data1/"
-    data_file = "data.npz"
-    data = np.load(data_dir + data_file)
-    data_x = data["x"]
-    data_y = data["y"]
-    print("Data X shape:", data_x.shape)
-    print("Data Y shape:", data_y.shape)
+    def save(self, file_path):
+        if not file_path.endswith('.pkl'):
+            file_path += '.pkl'
+        with open(file_path, "wb") as f:
+            pickle.dump(self.pipeline, f)
 
 
+    def tune_knn(self, X_train, y_train, X_val, y_val, w):
+        best_rmse = np.inf
+        best_cfg  = None
 
-    print("Training KNN 3dof...")
-    knn = train_knn(data_x, data_y, k, weight_tf)
+        for k in range(3,11):
+            for p in (1,2):
+                knn = Pipeline([
+                    ("scaler", StandardScaler()),
+                    ("weight", w),
+                    ("knn",    KNeighborsRegressor(n_neighbors=k, p=p, weights="uniform"))
+                ])
+                knn.fit(X_train, y_train)
+                yhat = knn.predict(X_val)
+                rmse = np.sqrt(np.mean((yhat - y_val)**2))
+                if rmse < best_rmse:
+                    best_rmse = rmse
+                    best_cfg = (k,p)
 
-    print("Saving knn 3dof")
-    results_dir = "../../results/knn/"
-    results_file = "knn_3dof.pkl"
-    with open(results_dir + results_file, "wb") as f:
-        pickle.dump(knn, f)
+        print(f"Best (k,p)={best_cfg} with RMSE={best_rmse:.4f}")
 
+        k_opt, p_opt = best_cfg
+        final_knn = Pipeline([
+            ("scaler", StandardScaler()),
+            ("knn",    KNeighborsRegressor(
+                        n_neighbors=k_opt,
+                        p=p_opt,
+                        weights="uniform"))
+                            ])
+        final_knn.fit(X_train, y_train)
+        self.pipeline = final_knn
 
-
-if __name__ == "__main__":
-    main()
