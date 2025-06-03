@@ -38,7 +38,7 @@ def train_svgp(gp_inputs_type, survey_name):
     gp.fit(inputs, targets, covariances=covariances, n_samples=1000, 
             max_iter=1000, learning_rate=1e-1, rtol=1e-12, n_window=2000, 
             auto=False, verbose=True)
-   
+
     # Save GP
     print("Saving trained GP")
     gp.save(name + '.pth')
@@ -46,7 +46,7 @@ def train_svgp(gp_inputs_type, survey_name):
     # save figures
     print("Plotting results")
     gp.plot(inputs, targets, name + '.png',
-             n=100, n_contours=100)
+            n=100, n_contours=100)
     gp.plot_loss(name + '_loss.png')
     
     # Save loss for tunning of stopping criterion
@@ -57,7 +57,7 @@ def train_svgp(gp_inputs_type, survey_name):
     x = inputs[:,0]
     y = inputs[:,1]
     gp.save_posterior(1000, min(x), max(x), min(y), max(y), 
-                      name + '_post.npy', verbose=False)
+                    name + '_post.npy', verbose=False)
 
 
 def trace_kernel(gp_path):
@@ -90,20 +90,20 @@ def load_plot(gp_path, survey_name, trajectory_name):
 
     name = "svgp_di"
     gp.plot(inputs, targets, name + '.png',
-             n=100, n_contours=100, track=track)
+            n=100, n_contours=100, track=track)
 
 
 if __name__ == '__main__':
 
     parser = OptionParser()
     parser.add_option("--gp_inputs", dest="gp_inputs",
-                  default="di", help="di or ui inputs for training.")
+                default="di", help="di or ui inputs for training.")
     parser.add_option("--survey_name", dest="survey_name",
-                  default="", help="Name for folder to store results.")
+                default="", help="Name for folder to store results.")
     parser.add_option("--gp", dest="gp",
-                  default="", help="GP already trained")
+                default="", help="GP already trained")
     parser.add_option("--trajectory", dest="track",
-                  default="", help="AUV track")
+                default="", help="AUV track")
 
     (options, args) = parser.parse_args()
     gp_inputs_type = options.gp_inputs

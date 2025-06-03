@@ -348,18 +348,19 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
     plt.savefig(name + ".png", dpi=300, bbox_inches="tight")
     plt.close()
 
-        # 3D trajectory plot
-    # fig = plt.figure()
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.plot(sim_pos[:,0], sim_pos[:,1], sim_pos[:,2], label='Sim', color='orange')
-    # ax.plot(real_pos[:,0], real_pos[:,1], real_pos[:,2], label='Real', color='green')
-    # ax.set_title('3D Position')
-    # ax.set_xlabel('X')
-    # ax.set_ylabel('Y')
-    # ax.set_zlabel('Z')
-    # ax.legend()
-    # plt.tight_layout()
-    # plt.show()
+    #3D trajectory plot
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(sim_pos[:,0], sim_pos[:,1], sim_pos[:,2], label='Sim', color='orange')
+    ax.plot(real_pos[:,0], real_pos[:,1], real_pos[:,2], label='Real', color='green')
+    ax.set_title('3D Position')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig("3D_" + name + ".png", dpi=300, bbox_inches="tight")
+    plt.close()
 #--------------------------------------------------
 
 def analyze_results(result):
@@ -373,7 +374,7 @@ def analyze_results(result):
     vel_mse  = np.mean((sim_vel - real_vel)**2, axis=0)
     vel_rmse = np.sqrt(vel_mse)
 
-    # 2) acc RMSE
+    #acc RMSE
     acc_mse  = np.mean((sim_acc - real_acc)**2, axis=0)
     acc_rmse = np.sqrt(acc_mse)
 
@@ -477,6 +478,8 @@ def runandanalyze(bag_paths, n_steps, model, dof):
         ctrl_seg = data["scaled_controls"][start:end]
         step_seg = data["steps"][start:end]
 
+        pos_seg  = pos_seg - pos_seg[0]
+
         result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
 
         name = "results_" + model + "_" + str(dof) + "-dof_" + str(global_idx)
@@ -530,23 +533,6 @@ def main():
     n_steps = 200
     bag_dir = "../../brov_tank_bags2"  # path bags
     metrics = {}
-
-    # # wanted bags
-    # bags_3dof = [ 
-    #     "rosbag2_2025_05_14-17_37_39", #train
-    #     "rosbag2_2025_05_14-17_12_31",  #train    
-    #     "rosbag2_2025_05_14-16_33_33", #
-    #     "rosbag2_2025_05_14-17_34_28" #val
-    # ]   
-    # bags_6dof = [
-    #     "rosbag2_2025_05_15-13_30_38", #
-    #     "rosbag2_2025_05_14-17_20_40",  #
-    #     "rosbag2_2025_05_14-17_26_50",
-    #     "rosbag2_2025_05_14-17_41_18"
-    #     ]
-    
-    # bags_3dof = ["rosbag2_2025_05_14-17_08_32"]
-    # bags_6dof = ["rosbag2_2025_05_14-17_18_19"]
 
     bags_3dof = ["rosbag2_2025_05_14-16_33_33",
                 "rosbag2_2025_05_14-17_12_31"]
