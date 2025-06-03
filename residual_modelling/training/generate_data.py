@@ -181,37 +181,34 @@ def main():
         acc_s = data["accelerations"]
 
         total_bins = scaled_ctrls.shape[0]
-        n_chunks   = (total_bins - 10) // n_steps
+
         
-        for chunk_idx in range(n_chunks):
-            start = chunk_idx * n_steps
-            end   = start + n_steps
-            pos_seg   = pos_s[start : end+1]
-            vel_seg   = vel_s[start : end+1]
-            acc_seg   = acc_s[start : end+1]
-            ctrl_seg  = scaled_ctrls[start : end]
-            step_seg  = dt_steps[start : end]
 
-            print("Running Unity simulation...")
-            env_path = "../envs/sitl_envs/v5/prior/prior.x86_64"
-            result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
+        start = 0
+        end   = total_bins - 50
+        pos_seg   = pos_s[start : end+1]
+        vel_seg   = vel_s[start : end+1]
+        acc_seg   = acc_s[start : end+1]
+        ctrl_seg  = scaled_ctrls[start : end]
+        step_seg  = dt_steps[start : end]
 
-            print(f"\nPlotting results for {rosbag_path}...\n")
-            plot_all(
-                result["controls"],
-                result["sim_pos"],
-                result["real_pos"],
-                result["sim_vel"],
-                result["real_vel"],
-                result["data_y"],
-                "resultplot_6dof_" + str(bagnr) + "_seg" + str(chunk_idx)
-            )
+        print("Running Unity simulation...")
+        env_path = "../envs/sitl_envs/v5/prior/prior.x86_64"
+        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
 
-            data_x.append(result["data_x"])
-            data_y.append(result["data_y"])
+        print(f"\nPlotting results for {rosbag_path}...\n")
+        plot_all(
+            result["controls"],
+            result["sim_pos"],
+            result["real_pos"],
+            result["sim_vel"],
+            result["real_vel"],
+            result["data_y"],
+            "resultplot_6dof_" + str(bagnr) + "_seg" + str(chunk_idx)
+        )
 
-    data6dof_x = np.vstack(data_x)
-    data6dof_y = np.vstack(data_y)
+    data6dof_x = np.vstack(result["data_x"])
+    data6dof_y = np.vstack(result["data_y"])
 
 
     # Split and save the data
