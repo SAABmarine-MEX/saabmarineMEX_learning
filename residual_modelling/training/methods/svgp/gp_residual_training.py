@@ -91,18 +91,18 @@ def load_plot(gp_path, survey_name, trajectory_name):
 
     name = "svgp_di"
     gp.plot(inputs, targets, name + '.png',
-             n=100, n_contours=100, track=track)
+            n=100, n_contours=100, track=track)
     """
 
 
 if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("--gp_inputs", dest="gp_inputs",
-                  default="di", help="di or ui inputs for training.")
+                default="di", help="di or ui inputs for training.")
     parser.add_option("--survey_name", dest="survey_name",
-                  default="../../results/svgp/", help="Name for folder to store results.")
+                default="../../results/svgp/", help="Name for folder to store results.")
     parser.add_option("--dof", dest="gp_dof",
-                  default="x", help="Which dof to train; 'x', 'y', 'z', 'roll', 'pitch', 'yaw' or 'all'.")
+                default="x", help="Which dof to train; 'x', 'y', 'z', 'roll', 'pitch', 'yaw' or 'all'.")
 
     (options, args) = parser.parse_args()
     gp_inputs_type = options.gp_inputs
@@ -128,10 +128,10 @@ if __name__ == '__main__':
         for dof, index in dof_to_indices.items():
             print(f"Training for dof: {dof}")
             train_svgp(gp_inputs_type, survey_name, 
-                       data_x, data_y[:, index], dof)
+                    data_x, data_y[:, index], dof)
     else:
         train_svgp(gp_inputs_type, survey_name,
-                   data_x, data_y[:, dof_to_indices[gp_dof]], gp_dof)
+                data_x, data_y[:, dof_to_indices[gp_dof]], gp_dof)
 
     # load_plot(gp_path, survey_name, track_path)
     # trace_kernel(survey_name)
