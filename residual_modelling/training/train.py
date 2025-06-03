@@ -1,5 +1,6 @@
 from optparse import OptionParser
 import numpy as np
+import os
 
 from methods.knn.knn import KNN
 from methods.mtgp.mtgp import MTGP
@@ -12,7 +13,7 @@ def main():
     parser.add_option("-m", "--model", dest="model",
                   default="all", help="Model type: 'knn', 'mtgp', 'svgp', or 'all'")
     parser.add_option("-c", "--complexity", dest="complexity",
-                      default="3dof", help="'3dof' or '6dof'") # TODO: implement 'all'
+                      default="all", help="'3dof', '6dof' or 'all'")
 
     (options, args) = parser.parse_args()
     model_type = options.model
@@ -22,8 +23,8 @@ def main():
     # 2. Set up directories
     data_dir = "data/"
     data_folder = "data3/" # TODO: add data dir as parser option
-    train_data_dir = data_dir + "train/" + data_folder
-    eval_data_dir = data_dir + "eval/" + data_folder
+    train_data_dir = data_dir + data_folder + "train/"
+    eval_data_dir  = data_dir + data_folder + "eval/"
 
 
     # 3. Train process
@@ -31,13 +32,19 @@ def main():
         if complexity == "all" or complexity == comp:
             print(f"Training for complexity: {comp}")
             # load training and evaluation data
-            train_data_x, train_data_y = load_data(train_data_dir, comp) # TODO: make sure the data files are in the right name structure for this to work. train/data_complexity.npz and eval/data_complexity.npz
+            train_data_x, train_data_y = load_data(train_data_dir, comp) 
+            print("Train data X shape:", train_data_x.shape)
+            print("Train data Y shape:", train_data_y.shape)
+
             eval_data_x, eval_data_y = load_data(eval_data_dir, comp)
+            print("Eval data X shape:", eval_data_x.shape)
+            print("Eval data Y shape:", eval_data_y.shape)
 
             # train model(s)
             for m_type in ["knn", "mtgp", "svgp"]:
                 if model_type == "all" or model_type == m_type:
-                    results_dir = "results/" + m_type + "/"
+                    results_dir = "results/data3/" + m_type + "/" # TODO: make new result dir for each new run
+                    os.makedirs(results_dir, exist_ok=True)
                     if m_type == "svgp":
                         # this model only gives one output, so we need to loop through the outputs
                         print("Training SVGP models...")
