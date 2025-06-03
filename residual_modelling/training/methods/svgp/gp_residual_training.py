@@ -5,7 +5,6 @@ import os
 from gp import SVGP
 import numpy as np
 from optparse import OptionParser
-import numpy as np
 #import open3d as o3d
 
 
