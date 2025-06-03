@@ -25,12 +25,19 @@ def main():
     data_x = []
     data_y = []
 
-    bag_dir = "ros2_bags/brov_tank_bags2"
-        #Only keyboard test
-    bags =  [ 
-        "rosbag2_2025_05_14-16_33_33", #
-        "rosbag2_2025_05_14-17_12_31" #
+    #bag_dir = "ros2_bags/brov_tank_bags2"
+    bag_dir = "ros2_bags/27-5"
+    
+    # 3DOF bags
+    bags = [
+        "rosbag2_2025_05_27-12_58_29",
     ]
+
+    #Only keyboard test
+    # bags =  [ 
+    #     "rosbag2_2025_05_14-16_33_33", #
+    #     "rosbag2_2025_05_14-17_12_31" #
+    # ]
 
     # Get the bag paths TODO: could make as function in py
     rosbag_paths = []
@@ -74,7 +81,6 @@ def main():
             step_seg  = dt_steps[start : end]
 
             print("Running Unity simulation...")
-            #env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
             env_path = "../envs/sitl_envs/v5/prior/prior.x86_64"
             result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
 
@@ -92,27 +98,54 @@ def main():
             data_x.append(result["data_x"])
             data_y.append(result["data_y"])
 
-    data_x = np.vstack(data_x)
-    data_y = np.vstack(data_y)
+    data3dof_x = np.vstack(data_x)
+    data3dof_y = np.vstack(data_y)
 
-    # Folder to save in
-    folder_path = "data/data2/"
+    """
+    # Split data into training and evaluation sets
+    num_samples = data_x.shape[0]
+    split_idx = int(0.8 * num_samples) # 80% for training, 20% for evaluation
+
+    # Split while preserving order
+    train_x = data_x[:split_idx]
+    train_y = data_y[:split_idx]
+
+    eval_x = data_x[split_idx:]
+    eval_y = data_y[split_idx:]
+
+
+    # Setup directories for saving data
+    folder_path = "data/data3/"
+    train_dir = os.path.join(folder_path, "train/")
+    eval_dir = os.path.join(folder_path, "eval/")
+
     os.makedirs(folder_path, exist_ok=True)
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(eval_dir, exist_ok=True)
 
-    # np.save("data/data_x.npy", data_x)
-    # np.save("data/data_y.npy", data_y)
-    np.savez(folder_path + "data3dof.npz", x=data_x, y=data_y)
+    # Save the processed data
+    # Save training data
+    np.savez(train_dir + "data3dof.npz", x=train_x, y=train_y)
+    # Save evaluation data
+    np.savez(eval_dir + "data3dof.npz", x=eval_x, y=eval_y)
+    """
+
 
     #-----------------------------6DOF-------------------------------------------
     data_x = []
     data_y = []
     # wanted bags
-    #6dof
+    # 6dof bags
     #check length total
 
-    bags =  [ 
-        "rosbag2_2025_05_14-17_20_40" #
-    ]   
+    # bags =  [ 
+    #     "rosbag2_2025_05_14-17_20_40" #
+    # ]
+    bags = [
+        "rosbag2_2025_05_27-12_54_51",
+        "rosbag2_2025_05_27-11_51_32"
+    ]
+
 
     # bags = [
     #     "rosbag2_2025_05_15-13_30_38", #
@@ -177,14 +210,49 @@ def main():
             data_x.append(result["data_x"])
             data_y.append(result["data_y"])
 
-    data_x = np.vstack(data_x)
-    data_y = np.vstack(data_y)
-
-    np.savez(folder_path + "data6dof.npz", x=data_x, y=data_y)
+    data6dof_x = np.vstack(data_x)
+    data6dof_y = np.vstack(data_y)
 
 
+    # Split and save the data
+    # Trim both to the minimum length
+    min_len = min(len(data3dof_x), len(data6dof_x))
 
-        # Generate the readme content
+    data3dof_x = data3dof_x[:min_len]
+    data3dof_y = data3dof_y[:min_len]
+
+    data6dof_x = data6dof_x[:min_len]
+    data6dof_y = data6dof_y[:min_len]
+
+    # Compute split index (80% for training)
+    split_idx = int(0.8 * min_len)
+
+    # Step 3: Perform the 80/20 split
+    train3dof_x, eval3dof_x = data3dof_x[:split_idx], data3dof_x[split_idx:]
+    train3dof_y, eval3dof_y = data3dof_y[:split_idx], data3dof_y[split_idx:]
+
+    train6dof_x, eval6dof_x = data6dof_x[:split_idx], data6dof_x[split_idx:]
+    train6dof_y, eval6dof_y = data6dof_y[:split_idx], data6dof_y[split_idx:]
+
+    # Setup directories for saving data
+    folder_path = "data/data3/"
+    train_dir = os.path.join(folder_path, "train/")
+    eval_dir = os.path.join(folder_path, "eval/")
+
+    os.makedirs(folder_path, exist_ok=True)
+    os.makedirs(train_dir, exist_ok=True)
+    os.makedirs(eval_dir, exist_ok=True)
+
+    # Save training data
+    np.savez(train_dir + "data3dof.npz", x=train3dof_x, y=train3dof_y)
+    np.savez(train_dir + "data6dof.npz", x=train6dof_x, y=train6dof_y)
+
+    # Save evaluation data
+    np.savez(eval_dir + "data3dof.npz", x=eval3dof_x, y=eval3dof_y)
+    np.savez(eval_dir + "data6dof.npz", x=eval6dof_x, y=eval6dof_y)
+
+
+    # Generate the readme content
     readme_lines = [
         "This dataset contains:",
         "- 3dof",

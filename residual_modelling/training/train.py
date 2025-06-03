@@ -21,7 +21,7 @@ def main():
 
     # 2. Set up directories
     data_dir = "data/"
-    data_folder = "data2/"
+    data_folder = "data3/" # TODO: add data dir as parser option
     train_data_dir = data_dir + "train/" + data_folder
     eval_data_dir = data_dir + "eval/" + data_folder
 
