@@ -6,4 +6,5 @@
 - [DONE] make a combined train.py script with parse_args
 - [DONE] remove utils.py by adding everything to generate_data.py, and then remove the package
 - [DONE] make the generate_data.py better to give train and eval data
-- [ ] make seperate result folder for each run
+- [DONE] make seperate result folder for each run
+- [ ] add parse option for note/comment that is added to the result folder
