@@ -427,16 +427,31 @@ class SVGP(VariationalGP):
         # save
         fig.savefig(fname, bbox_inches='tight', dpi=1000)
         
-    def save(self, fname):
+    def save(self, input_dim, scaler, fname):
         if '.pth' not in fname:
             fname += '.pth'
-        torch.save(self.state_dict(), fname)
+        torch.save({
+        "model_state": self.state_dict(),
+        "scaler_mean": scaler.mean_,
+        "scaler_scale": scaler.scale_,
+        "n_inducing": self.m,
+        "input_dim": input_dim,
+        },fname)
 
     @classmethod
-    def load(cls, nind, fname):
-        gp = cls(nind)
-        gp.load_state_dict(torch.load(fname))
-        return gp
+    def load(cls, fname):
+        chk = torch.load(fname, map_location="cpu")
+        
+        gp = cls(n_inducing=chk["n_inducing"], n_inputs=chk["input_dim"])
+        gp.load_state_dict(chk["model_state"])
+        gp.eval()
+        gp.likelihood.eval()
+
+        scaler = StandardScaler()
+        scaler.mean_ = chk["scaler_mean"]
+        scaler.scale_ = chk["scaler_scale"]
+
+        return gp, scaler
 
     def predict(self, tx):
         '''
