@@ -441,12 +441,12 @@ def plot_comparisons(metrics_dict):
         print(f"saved {out_avgres}")
 #--------------------------------------------------
 
-def runandanalyze(bag_paths, n_steps, model, dof):
+def runandanalyze(bag_paths, model, dof):
     if model == "zero-shot":
         env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
     else:
         env_path = "envs/res_inference/empty/brov_empty.x86_64"
-    segments = []  # list of (bag, start, end)
+    #segments = []  # list of (bag, start, end)
 
     for bag in bag_paths:
 
@@ -454,53 +454,38 @@ def runandanalyze(bag_paths, n_steps, model, dof):
         df = load_rosbag(bag)
         data = process_data(df)
         total_bins = data["scaled_controls"].shape[0]
-        n_chunks   = (total_bins - 1) // n_steps
-
-        for chunk_idx in range(n_chunks):
-            start = chunk_idx * n_steps
-            end   = start + n_steps
-            segments.append((bag, start, end, data))
-
-    total_windows = len(segments)
-    half = total_windows // 2
+        #TODO check that this is only 1 bag and then delete for loop
     
-    all_rmse   = []
-    all_avgres = []
 
-    for global_idx, (bag, start, end, data) in enumerate(segments):
+    bins = total_bins - 50
 
-        # if global_idx > half:
-        #     continue
+    pos_seg  = data["positions"]        [0:bins+1]
+    vel_seg  = data["velocities"]       [0:bins+1]
+    acc_seg  = data["accelerations"]    [0:bins+1]
+    ctrl_seg = data["scaled_controls"]  [0:bins]
+    step_seg = data["steps"]            [0:bins]
 
-        pos_seg  = data["positions"][ start:end+1 ]
-        vel_seg  = data["velocities"][start:end+1 ]
-        acc_seg  = data["accelerations"][start:end+1 ]
-        ctrl_seg = data["scaled_controls"][start:end]
-        step_seg = data["steps"][start:end]
+    pos_seg  = pos_seg - pos_seg[0]
 
-        pos_seg  = pos_seg - pos_seg[0]
+    result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, bins, env_path)
 
-        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
+    name = "results_" + model + "_" + str(dof) + "-dof"
 
-        name = "results_" + model + "_" + str(dof) + "-dof_" + str(global_idx)
-
-        plot_all(
-            result["controls"],
-            result["sim_pos"],
-            result["real_pos"],
-            result["sim_vel"],
-            result["real_vel"],
-            result["data_y"],
-            name
-        )
-        rmse, avgres = analyze_results(result)
-        all_rmse.append(rmse)
-        all_avgres.append(avgres)
+    plot_all(
+        result["controls"],
+        result["sim_pos"],
+        result["real_pos"],
+        result["sim_vel"],
+        result["real_vel"],
+        result["data_y"],
+        name
+    )
+    rmse, avgres = analyze_results(result)
 
     labels = ['X','Y','Z','Roll','Pitch','Yaw']
 
-    rmse_mean   = np.mean(np.vstack(all_rmse),   axis=0)
-    avgres_mean = np.mean(np.vstack(all_avgres), axis=0)
+    rmse_mean   = np.mean(np.vstack(rmse),   axis=0)
+    avgres_mean = np.mean(np.vstack(avgres), axis=0)
 
     metrics_fname = f"{model}{dof}dof_metrics.txt"
     with open(metrics_fname, 'w') as f:
@@ -513,12 +498,12 @@ def runandanalyze(bag_paths, n_steps, model, dof):
 #--------------------------------------
 
 def launch_server(model, dof, port="8000"):
-    cmd = [sys.executable, "fastserver.py", "--model", model, "--dof", str(dof), "--port", port]
+    cmd = [sys.executable, "-m", "inference.fastserver", "--model", model, "--dof", str(dof), "--port", port]
     return subprocess.Popen([
         "gnome-terminal",
         "--",
         "bash", "-lc",
-        " ".join(cmd)   
+        " ".join(cmd)
     ],preexec_fn=os.setsid)
 
 def stop_server(proc, port=8000):
@@ -530,15 +515,13 @@ def stop_server(proc, port=8000):
 #----------------------------Main------------------------------
 
 def main():
-    n_steps = 200
-    bag_dir = "../../brov_tank_bags2"  # path bags
+    bag_dir = "training/ros2_bags/27-5"  # path bags
     metrics = {}
 
-    bags_3dof = ["rosbag2_2025_05_14-16_33_33",
-                "rosbag2_2025_05_14-17_12_31"]
+    bags_3dof = ["rosbag2_2025_05_27-11_57_50"]
     
     
-    bags_6dof = ["rosbag2_2025_05_14-17_20_40"]
+    bags_6dof = ["rosbag2_2025_05_27-12_04_31"]
 
 
     bag_paths3 = [os.path.join(bag_dir, b, f"{b}_0.db3") for b in bags_3dof]
@@ -546,21 +529,21 @@ def main():
 
     for bag_paths, dof in [(bag_paths3,3),(bag_paths6,6)]:
     # zero-shot first half
-        rmse0, avg0 = runandanalyze(bag_paths, n_steps, "zero-shot", dof)
+        rmse0, avg0 = runandanalyze(bag_paths, "zero-shot", dof)
         metrics[("zero-shot",dof)] = (rmse0, avg0)
 
         for model in ("knn","gp"):
             #TODO Check that new model actually load.
 
-            srv = launch_server(model, dof); time.sleep(1)
-            r, a = runandanalyze(bag_paths, n_steps, model, dof)
+            srv = launch_server(model, dof); time.sleep(3)
+            r, a = runandanalyze(bag_paths, model, dof)
             stop_server(srv)
             srv.wait()
             
             #srv.terminate(); srv.wait(5)
             metrics[(model,dof)] = (r, a)
 
-    plot_comparisons(metrics)
+        plot_comparisons(metrics)
 
 if __name__ == "__main__":
     main()

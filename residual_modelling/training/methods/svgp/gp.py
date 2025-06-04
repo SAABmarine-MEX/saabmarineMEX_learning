@@ -11,140 +11,7 @@ from gpytorch.mlls import VariationalELBO, PredictiveLogLikelihood, ExactMargina
 import gpytorch.settings
 from .convergence import ExpMAStoppingCriterion
 #from gp_mapping.convergence import ExpMAStoppingCriterion
-import matplotlib.pyplot as plt
-
-# This is not tested
-class RGP(ExactGP):
-
-    def __init__(self, inputs, targets, likelihood):
-
-        # check the hardware
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-        # store inputs and outputs
-        self.inputs = torch.from_numpy(inputs).float().to(self.device)
-        self.targets = torch.from_numpy(targets).float().to(self.device)
-
-        # initialise GP and store likelihood
-        ExactGP.__init__(self, self.inputs, self.targets, likelihood)
-        self.likelihood = likelihood
-
-        # mean and covariance
-        self.mean = ConstantMean()
-        # self.cov = GaussianSymmetrizedKLKernel()
-        self.cov = MaternKernel(ard_num_dims=2)
-        self.cov = ScaleKernel(self.cov, ard_num_dims=2)
-        self.cov = InducingPointKernel(self.cov, self.inputs, self.likelihood)
-
-        # you better have a GPU!
-        self.likelihood.to(self.device).float()
-        self.to(self.device).float()
-
-    def forward(self, inputs):
-        mean = self.mean(inputs)
-        cov = self.cov(inputs)
-        return MultivariateNormal(mean, cov)
-
-    def fit(self, max_iter=100, learning_rate=1e-3, rtol=1e-2, n_window=100, auto=False, verbose=True):
-
-        # loss function
-        mll = ExactMarginalLogLikelihood(self.likelihood, self)
-
-        # stochastic optimiser
-        opt = torch.optim.Adam(self.parameters(),lr=learning_rate)
-
-        # convergence criterion
-        if auto: criterion = ExpMAStoppingCriterion(rel_tol=rtol, n_window=n_window)
-
-        # episode iteratior
-        epochs = range(max_iter)
-        epochs = tqdm.tqdm(epochs) if verbose else epochs
-
-        # train
-        self.train()
-        self.likelihood.train()
-        for _ in epochs:
-
-            # compute loss, compute gradient, and update
-            opt.zero_grad()
-            loss = -mll(self(self.inputs), self.targets)
-            loss.backward()
-            opt.step()
-
-            # verbosity and convergence check
-            if verbose:
-                epochs.set_description('Loss {:.4f}'.format(loss.item()))
-            if auto and criterion.evaluate(loss.detach()):
-                break
-
-    def plot(self, fname, n=100, n_contours=50):
-
-        '''
-        Plots:
-            ax[0]: raw inputs and targets,
-            ax[1]: posterior predictive mean,
-            ax[2]: posterior predictive variance
-        inputs: (n,2) numpy array of inputs
-        output: (n,) numpy array of targets
-        fname: path to save plot at (extension determines file type, e.g. .png or .pdf)
-        n: determines n² number of sampling locations to plot GP posterior
-        n_contours: number of contours to show output magnitude with
-        '''
-
-        # toggle evaluation mode
-        self.likelihood.eval()
-        self.eval()
-        torch.cuda.empty_cache()
-
-        # posterior sampling locations
-        inputs = self.inputs.cpu().numpy()
-        targets = self.targets.cpu().numpy()
-        inputsg = [
-            np.linspace(min(inputs[:,0]), max(inputs[:,0]), n),
-            np.linspace(min(inputs[:,1]), max(inputs[:,1]), n)
-        ]
-        inputst = np.meshgrid(*inputsg)
-        s = inputst[0].shape
-        inputst = [_.flatten() for _ in inputst]
-        inputst = np.vstack(inputst).transpose()
-        inputst = torch.from_numpy(inputst).to(self.device).float()
-
-        # sample
-        with torch.no_grad():
-            outputs = self(inputst)
-            outputs = self.likelihood(outputs)
-            mean = outputs.mean.cpu().numpy().reshape(s)
-            variance = outputs.variance.cpu().numpy().reshape(s)
-
-        # plot raw, mean, and variance
-        fig, ax = plt.subplots(3, sharex=True, sharey=True)
-        cr = ax[0].scatter(inputs[:,0], inputs[:,1], c=targets, cmap='viridis', s=0.4, edgecolors='none')
-        cm = ax[1].contourf(*inputsg, mean, levels=n_contours)
-        cv = ax[2].contourf(*inputsg, variance, levels=n_contours)
-        # indpts = self.variational_strategy.inducing_points.data.cpu().numpy()
-        # indpts = self.cov._inducing_inv_root.
-        # ax[2].plot(indpts[:,0], indpts[:,1], 'ko', markersize=3, alpha=0.2)
-
-        # colorbars
-        fig.colorbar(cr, ax=ax[0])
-        fig.colorbar(cm, ax=ax[1])
-        fig.colorbar(cv, ax=ax[2])
-
-        # formatting
-        ax[0].set_aspect('equal')
-        ax[0].set_title('Raw data')
-        ax[0].set_ylabel('$y~[m]$')
-        ax[1].set_aspect('equal')
-        ax[1].set_title('Mean')
-        ax[1].set_ylabel('$y~[m]$')
-        ax[2].set_aspect('equal')
-        ax[2].set_title('Variance')
-        ax[2].set_xlabel('$x~[m]$')
-        ax[2].set_ylabel('$y~[m]$')
-        plt.tight_layout()
-
-        # save
-        fig.savefig(fname, bbox_inches='tight', dpi=1000)
+from sklearn.preprocessing import StandardScaler
 
 
 class SVGP(VariationalGP):
@@ -163,7 +30,7 @@ class SVGP(VariationalGP):
         vardist = CholeskyVariationalDistribution(self.m)
         varstra = VariationalStrategy(
             self,
-            torch.randn((self.m, n_inputs)), # TODO: shoud this 2 also be n_inputs?
+            torch.randn((self.m, n_inputs)), #
             vardist,
             learn_inducing_locations=True
         )
@@ -174,6 +41,8 @@ class SVGP(VariationalGP):
         self.cov = MaternKernel(ard_num_dims=n_inputs)
         # self.cov = GaussianSymmetrizedKLKernel()
         self.cov = ScaleKernel(self.cov, ard_num_dims=n_inputs)
+
+        self.scaler = None
         
         # likelihood
         self.likelihood = GaussianLikelihood()
@@ -204,13 +73,15 @@ class SVGP(VariationalGP):
         auto: if True terminate based on rtol and ntol, else terminate at max_iter
         verbose: if True show progress bar, else nothing
         '''
+        self.scaler = StandardScaler()
+        inputs_scaled = self.scaler.fit_transform(inputs)
 
         # inducing points randomly distributed over data
-        indpts = np.random.choice(inputs.shape[0], self.m, replace=True)
-        self.variational_strategy.inducing_points.data = torch.from_numpy(inputs[indpts]).to(self.device).float()
+        indpts = np.random.choice(inputs_scaled.shape[0], self.m, replace=True)
+        self.variational_strategy.inducing_points.data = torch.from_numpy(inputs_scaled[indpts]).to(self.device).float()
 
         # number of random samples
-        n = inputs.shape[0]
+        n = inputs_scaled.shape[0]
         n = n_samples if n >= n_samples else n
 
         # objective
@@ -235,11 +106,12 @@ class SVGP(VariationalGP):
         for _ in epochs:
 
             # randomly sample from the dataset
-            idx = np.random.choice(inputs.shape[0], n, replace=False)
-            
+            idx = np.random.choice(inputs_scaled.shape[0], n, replace=False)
+
+
             ## UI covariance
-            if covariances is None or covariances.shape[1] == 2:
-                input = torch.from_numpy(inputs[idx]).to(self.device).float()
+            if covariances is None or covariances.shape[1] == 18:
+                input = torch.from_numpy(inputs_scaled[idx]).to(self.device).float()
                 target = torch.from_numpy(targets[idx]).to(self.device).float()
 
             # if the inputs are distributional, sample them
@@ -274,16 +146,19 @@ class SVGP(VariationalGP):
         # self.likelihood.eval()
         # self.eval()
         ## before using this function to toggle evaluation mode
-
+        if self.scaler is None:
+            raise ValueError("Scaler not initialized")
         # sanity
-        assert len(x.shape) == x.shape[1] == 2
+        assert len(x.shape) == 2 and x.shape[1] == 18, \
+            f"Expected input shape (n, {self.n_inputs}), but got {x.shape}"
 
+        x_scaled = self.scaler.transform(x)
         # sample posterior
         # TODO: fast_pred_var activates LOVE. Test performance on PF
         # https://towardsdatascience.com/gaussian-process-regression-using-gpytorch-2c174286f9cc
         with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            x = torch.from_numpy(x).to(self.device).float()
-            dist = self.likelihood(self(x))
+            x_tensor = torch.from_numpy(x_scaled).to(self.device).float()
+            dist = self.likelihood(self(x_tensor))
             return dist.mean.cpu().numpy(), dist.variance.cpu().numpy()
 
     def save_posterior(self, n, xlb, xub, ylb, yub, fname, verbose=True):
@@ -427,15 +302,16 @@ class SVGP(VariationalGP):
         # save
         fig.savefig(fname, bbox_inches='tight', dpi=1000)
         
-    def save(self, input_dim, scaler, fname):
+    def save(self, fname):
+        assert self.scaler is not None, "Scaler not initialized"
         if '.pth' not in fname:
             fname += '.pth'
         torch.save({
-        "model_state": self.state_dict(),
-        "scaler_mean": scaler.mean_,
-        "scaler_scale": scaler.scale_,
-        "n_inducing": self.m,
-        "input_dim": input_dim,
+            "model_state": self.state_dict(),
+            "scaler_mean": self.scaler.mean_,
+            "scaler_scale": self.scaler.scale_,
+            "n_inducing": self.m,
+            "input_dim": self.n_inputs,
         },fname)
 
     @classmethod
@@ -450,6 +326,7 @@ class SVGP(VariationalGP):
         scaler = StandardScaler()
         scaler.mean_ = chk["scaler_mean"]
         scaler.scale_ = chk["scaler_scale"]
+        gp.scaler = scaler
 
         return gp, scaler
 
