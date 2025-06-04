@@ -1,6 +1,7 @@
 from optparse import OptionParser
 import numpy as np
 import os
+from datetime import datetime
 
 from methods.knn.knn import KNN
 from methods.mtgp.mtgp import MTGP
@@ -22,9 +23,10 @@ def main():
 
     # 2. Set up directories
     data_dir = "data/"
-    data_folder = "data3/" # TODO: add data dir as parser option
+    data_folder = "data4/" # TODO: add data dir as parser option
     train_data_dir = data_dir + data_folder + "train/"
     eval_data_dir  = data_dir + data_folder + "eval/"
+    results_dir = create_results_dir()  # Creates unique timestamped directory
 
 
     # 3. Train process
@@ -43,19 +45,21 @@ def main():
             # train model(s)
             for m_type in ["knn", "mtgp", "svgp"]:
                 if model_type == "all" or model_type == m_type:
-                    results_dir = "results/data3/" + m_type + "/" # TODO: make new result dir for each new run
-                    os.makedirs(results_dir, exist_ok=True)
+                    results_model_dir = results_dir + f"{m_type}/"
+                    os.makedirs(results_model_dir, exist_ok=True)
+
                     if m_type == "svgp":
                         # this model only gives one output, so we need to loop through the outputs
                         print("Training SVGP models...")
                         for i in range(train_data_y.shape[1]):
+                            # NOTE: index are represent (x, y, z, roll, pitch, yaw) = (0, 1, 2, 3, 4, 5)
                             print(f"Training SVGP for output index {i}...")
                             model = model_factory(m_type)#, output_index=i)
                             model.fit(inputs=train_data_x, targets=train_data_y[:, i])
 
                             print("Saving model...")
                             file_name = f"{m_type}_{comp}_output_{i}"
-                            model.save(results_dir + file_name)
+                            model.save(results_model_dir + file_name)
 
                             print("Evaluating model...")
                             yhat = model.predict(eval_data_x)
@@ -68,7 +72,7 @@ def main():
 
                         print("Saving model...")
                         file_name = f"{m_type}_{comp}" 
-                        model.save(results_dir + file_name)
+                        model.save(results_model_dir + file_name)
 
                         print("Evaluating model...")
                         yhat = model.predict(data_x=eval_data_x)
@@ -78,6 +82,11 @@ def main():
                         # TODO: add plots
 
 
+def create_results_dir():
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    results_dir = f"results/{timestamp}/"
+
+    return results_dir
 
 
 
