@@ -7,14 +7,12 @@ import torch
 import gpytorch
 from sklearn.preprocessing import StandardScaler
 from fastapi import FastAPI, Body, HTTPException, Response
-import model_pb2
+from inference import model_pb2
 
 import sys
 import os
 
-#TODO make cleaner & check if works
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'training', 'methods', 'svgp')))
-from gp import SVGP
+from training.methods.svgp.gp import SVGP
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -22,15 +20,10 @@ app = FastAPI()
 
 knn_model    = None
 
-gp_x = None
-gp_y = None
-gp_z = None
-gp_wx = None
-gp_wy = None
-gp_wz = None
+gp_models = []
 
 likelihood   = None
-gp_scalwer    = None
+gp_scaler    = None
 _model_choice= "knn"
 _dof_choice  = "6"
 
@@ -38,28 +31,19 @@ weight = np.array([1]*6 +[1]*6 + [1]*6, dtype=np.float32)
 
 # -------------------------------------
 def load_all(model_choice, dof_choice):
-    global knn_model, gp_x, gp_y, gp_z, gp_wx, gp_wy, gp_wz, likelihood, gp_scaler, _model_choice, _dof_choice, weight
-
+    global knn_model, gp_models, likelihood, gp_scaler, _model_choice, _dof_choice, weight
+    dir = "training/results/2025-06-04_16-02-34"
     _model_choice = model_choice
     _dof_choice = dof_choice
 
     if dof_choice == "6":
-        knn_path = "knn_6dof.pkl"
-        gp_path = ["svgp_6dof_output_0.pth",
-                "svgp_6dof_output_1.pth",
-                "svgp_6dof_output_2.pth",
-                "svgp_6dof_output_3.pth",
-                "svgp_6dof_output_4.pth",
-                "svgp_6dof_output_5.pth"]
-    else:
-        knn_path = "knn_3dof.pkl"
+        knn_path = dir + "/knn/knn_6dof.pkl"
+        gp_path = [dir + f"/svgp/svgp_6dof_output_{i}.pth" for i in range(6)]
 
-        gp_path = ["svgp_3dof_output_0.pth",
-                "svgp_3dof_output_1.pth",
-                "svgp_3dof_output_2.pth",
-                "svgp_3dof_output_3.pth",
-                "svgp_3dof_output_4.pth",
-                "svgp_3dof_output_5.pth"]
+    else:
+        knn_path = dir + "/knn/knn_3dof.pkl"
+
+        gp_path = [dir + f"/svgp/svgp_3dof_output_{i}.pth" for i in range(6)]
     
     if model_choice == "knn":
         print(f"[startup] Loading KNN from {knn_path}")
@@ -69,24 +53,26 @@ def load_all(model_choice, dof_choice):
     else:
         print(f"[startup] Loading all 6 SVGPs")
 
-        gp_models = []
-
         for i, path in enumerate(gp_path):
             gp, scaler = SVGP.load(path)
             gp_models.append(gp)
 
             if i == 0:
-                gp_scaler = scaler 
+                gp_scaler = scaler
 
-def model_predict(models, X: list[float]) -> list[float]:
+        for gp in gp_models:
+            gp.scaler = gp_scaler
+
+def model_predict(features: list[float]) -> list[float]:
     print(_model_choice + _dof_choice)
-    X_scaled = gp_scaler.transform(X)
+    X = np.array(features, dtype=np.float32).reshape(1, -1)
 
     if _model_choice == "knn":
         return knn_model.predict(X)[0].tolist()
     else:
+        X_scaled = gp_scaler.transform(X)
         predictions = []
-        for model in models:
+        for model in gp_models:
             mu, _ = model.sample(X_scaled)
             predictions.append(mu[0])
         return np.array(predictions)

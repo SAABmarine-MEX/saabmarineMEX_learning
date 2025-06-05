@@ -3,18 +3,18 @@ import numpy as np
 import os
 from datetime import datetime
 
-from methods.knn.knn import KNN
-from methods.mtgp.mtgp import MTGP
-from methods.svgp.gp import SVGP
+from training.methods.knn.knn import KNN
+from training.methods.mtgp.mtgp import MTGP
+from training.methods.svgp.gp import SVGP
 
 
 def main():
     # 1. Option parser
     parser = OptionParser()
     parser.add_option("-m", "--model", dest="model",
-                  default="all", help="Model type: 'knn', 'mtgp', 'svgp', or 'all'")
+                default="all", help="Model type: 'knn', 'mtgp', 'svgp', or 'all'")
     parser.add_option("-c", "--complexity", dest="complexity",
-                      default="all", help="'3dof', '6dof' or 'all'")
+                default="all", help="'3dof', '6dof' or 'all'")
 
     (options, args) = parser.parse_args()
     model_type = options.model
@@ -22,7 +22,7 @@ def main():
     print("Selected model type:", model_type)
 
     # 2. Set up directories
-    data_dir = "data/"
+    data_dir = "training/data/"
     data_folder = "data4/" # TODO: add data dir as parser option
     train_data_dir = data_dir + data_folder + "train/"
     eval_data_dir  = data_dir + data_folder + "eval/"
@@ -84,7 +84,7 @@ def main():
 
 def create_results_dir():
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    results_dir = f"results/{timestamp}/"
+    results_dir = f"training/results/{timestamp}/"
 
     return results_dir
 

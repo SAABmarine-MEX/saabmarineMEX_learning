@@ -1,0 +1,3 @@
+Axis,X,Y,Z,Roll,Pitch,Yaw
+RMSE,0.169564
+AvgResidual,0.319772
