@@ -32,7 +32,7 @@ weight = np.array([1]*6 +[1]*6 + [1]*6, dtype=np.float32)
 # -------------------------------------
 def load_all(model_choice, dof_choice):
     global knn_model, gp_models, likelihood, gp_scaler, _model_choice, _dof_choice, weight
-    dir = "training/results/2025-06-04_16-02-34"
+    dir = "training/results/2025-06-05_15-16-27"
     _model_choice = model_choice
     _dof_choice = dof_choice
 

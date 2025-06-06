@@ -8,7 +8,3 @@
 - [DONE] make the generate_data.py better to give train and eval data
 - [DONE] make seperate result folder for each run
 - [ ] add parse option for note/comment that is added to the result folder
-
-
-# Run the server
-PYTHONPATH=$(pwd) python3 inference/fastserver.py

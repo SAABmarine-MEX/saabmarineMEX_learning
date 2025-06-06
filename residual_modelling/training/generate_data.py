@@ -21,17 +21,19 @@ from mlagents_envs.base_env import ActionTuple
 
 def main():
     # Prep input
-    n_steps = 200
+    #n_steps = 200
     data_x = []
     data_y = []
 
     #bag_dir = "ros2_bags/brov_tank_bags2"
-    bag_dir = "ros2_bags/27-5"
+    bag_dir = "training/ros2_bags/27-5"
+
+    plotdir = "training_plots"
+    os.makedirs(plotdir, exist_ok=True)
     
     # 3DOF bags
-    bags = [
-        "rosbag2_2025_05_27-12_58_29",
-    ]
+    bags = ["rosbag2_2025_05_27-12_58_29",
+            "rosbag2_2025_05_27-11_34_13"]
 
     #Only keyboard test
     # bags =  [ 
@@ -69,7 +71,7 @@ def main():
         acc_s = data["accelerations"]
 
         total_bins = scaled_ctrls.shape[0]
-        n_chunks   = (total_bins - 10) // n_steps
+        #n_chunks   = (total_bins - 10) // n_steps
         
         """
         for chunk_idx in range(n_chunks):
@@ -87,6 +89,7 @@ def main():
             """
         start = 0
         end   = total_bins - 50
+        print(end)
         pos_seg   = pos_s[start : end+1]
         vel_seg   = vel_s[start : end+1]
         acc_seg   = acc_s[start : end+1]
@@ -94,21 +97,21 @@ def main():
         step_seg  = dt_steps[start : end]
 
         print("Running Unity simulation...")
-        env_path = "../envs/sitl_envs/v5/prior/prior.x86_64"
-        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
-
+        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
+        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, end, env_path)
 
         # print(f"\nPlotting results for {rosbag_path}...\n")
-        # plot_all(
-        #     result["controls"],
-        #     result["sim_pos"],
-        #     result["real_pos"],
-        #     result["sim_vel"],
-        #     result["real_vel"],
-        #     result["data_y"],
-        #     "resultplot_3dof_" + str(bagnr) + "_seg" + str(chunk_idx)
-        # )
-
+        plot_all(
+            result["controls"],
+            result["sim_pos"],
+            result["real_pos"],
+            result["sim_vel"],
+            result["real_vel"],
+            result["data_y"],
+            "trainingplot_3dof_" + str(bagnr),
+            plotdir
+            )
+        
         data_x.append(result["data_x"])
         data_y.append(result["data_y"])
 
@@ -157,7 +160,8 @@ def main():
     # ]
     bags = [
         "rosbag2_2025_05_27-12_54_51",
-        "rosbag2_2025_05_27-11_51_32"
+        "rosbag2_2025_05_27-11_51_32",
+        "rosbag2_2025_05_27-13_04_58"
     ]
 
 
@@ -200,6 +204,7 @@ def main():
 
         start = 0
         end   = total_bins - 50
+        print(end)
         pos_seg   = pos_s[start : end+1]
         vel_seg   = vel_s[start : end+1]
         acc_seg   = acc_s[start : end+1]
@@ -207,19 +212,20 @@ def main():
         step_seg  = dt_steps[start : end]
 
         print("Running Unity simulation...")
-        env_path = "../envs/sitl_envs/v5/prior/prior.x86_64"
-        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, n_steps, env_path)
+        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
+        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, end, env_path)
 
         # print(f"\nPlotting results for {rosbag_path}...\n")
-        # plot_all(
-        #     result["controls"],
-        #     result["sim_pos"],
-        #     result["real_pos"],
-        #     result["sim_vel"],
-        #     result["real_vel"],
-        #     result["data_y"],
-        #     "resultplot_6dof_" + str(bagnr) + "_seg" + str(chunk_idx)
-        # )
+        plot_all(
+            result["controls"],
+            result["sim_pos"],
+            result["real_pos"],
+            result["sim_vel"],
+            result["real_vel"],
+            result["data_y"],
+            "trainingplot_6dof_" + str(bagnr),
+            plotdir
+        )
 
     data6dof_x = np.vstack(result["data_x"])
     data6dof_y = np.vstack(result["data_y"])
@@ -235,10 +241,10 @@ def main():
     data6dof_x = data6dof_x[:min_len]
     data6dof_y = data6dof_y[:min_len]
 
-    # Compute split index (80% for training)
-    split_idx = int(0.8 * min_len)
+    # split index
+    split_idx = int(0.95 * min_len)
 
-    # Step 3: Perform the 80/20 split
+    # split
     train3dof_x, eval3dof_x = data3dof_x[:split_idx], data3dof_x[split_idx:]
     train3dof_y, eval3dof_y = data3dof_y[:split_idx], data3dof_y[split_idx:]
 
@@ -246,7 +252,7 @@ def main():
     train6dof_y, eval6dof_y = data6dof_y[:split_idx], data6dof_y[split_idx:]
 
     # Setup directories for saving data
-    folder_path = "data/data4_unchunked/"
+    folder_path = "training/data/data5_unchunked/"
     train_dir = os.path.join(folder_path, "train/")
     eval_dir = os.path.join(folder_path, "eval/")
 
@@ -455,7 +461,7 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
     }
 
 
-def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
+def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir):
 
     dof_labels = ['X', 'Y', 'Z', 'Roll', 'Pitch', 'Yaw']
     num_dofs = 6
@@ -509,7 +515,9 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
     axs[2, 0].legend(loc='upper right', fontsize='small')
     
     plt.tight_layout()
-    plt.savefig( name + ".png", dpi=300, bbox_inches="tight")
+    out_path = os.path.join(dir, f"{name}.png")
+    plt.savefig( out_path, dpi=300, bbox_inches="tight")
+    plt.close()
 
         # 3D trajectory plot
     # fig = plt.figure()
