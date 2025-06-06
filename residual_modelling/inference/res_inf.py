@@ -11,7 +11,6 @@ import torch
 import gpytorch
 
 import rosbag2_py
-
 from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from rclpy.serialization import deserialize_message
 
@@ -37,11 +36,11 @@ import time
 def get_rosbag_paths(parent_folder):
     rosbag_paths = []
 
-    # Loop over each subfolder inside the parent folder
+    # Loop each subfolder
     for bag_dir in os.listdir(parent_folder):
         full_path = os.path.join(parent_folder, bag_dir)
         if os.path.isdir(full_path):
-            # Look for .db3 files in the subfolder
+            # .db3 files
             db3_files = glob.glob(os.path.join(full_path, "*.db3"))
             if db3_files:
                 rosbag_paths.append(db3_files[0]) 
@@ -179,7 +178,7 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
     agg_timestamps = np.array(agg_ts)
     agg_velocities[3], agg_velocities[4] = agg_velocities[4], agg_velocities[3]
 
-    # Compute true dt in seconds
+    # Compute dt in seconds
     dt = np.diff(agg_timestamps, prepend=agg_timestamps[0]) / 1e9
     dt[0] = dt[1]
 
@@ -246,11 +245,10 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
             sim_vel_s[3], sim_vel_s[4] = sim_vel_s[4], sim_vel_s[3], 
 
 
-            qs = np.array(sim_rot_q)  # OBS CHECK order = [x, y, z, w]
+            qs = np.array(sim_rot_q)  # [x, y, z, w]
             rotations = R.from_quat(qs)
             euler = rotations.as_euler('xyz', degrees=False)
             sim_rot = np.unwrap(euler)
-            #OBS CHECK AXES
 
             sim_dt = sim_timestep * num_sim_steps
             sim_acc_s = (sim_vel_s - prev_sim_vel) / sim_dt
@@ -270,6 +268,7 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
                 real_vel.append(real_vel_s)
                 real_acc.append(real_acc_s)
                 rc.append(current_control)
+
                 data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
                 data_y.append(force_rescale)
 
@@ -289,8 +288,7 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
     }
 
 #--------------------------------------
-def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
-
+def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir):
     # --- the rest of your function ---
     dof_labels = ['X', 'Y', 'Z', 'Roll', 'Pitch', 'Yaw']
     num_dofs = 6
@@ -345,7 +343,8 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
     axs[2, 0].legend(loc='upper right', fontsize='small')
     
     plt.tight_layout()
-    plt.savefig(name + ".png", dpi=300, bbox_inches="tight")
+    out_path = os.path.join(dir, f"{name}.png")
+    plt.savefig(out_path, dpi=300, bbox_inches="tight")
     plt.close()
 
     #3D trajectory plot
@@ -359,7 +358,8 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name):
     ax.set_zlabel('Z')
     ax.legend()
     plt.tight_layout()
-    plt.savefig("3D_" + name + ".png", dpi=300, bbox_inches="tight")
+    out_path_3d = os.path.join(dir, f"3D_{name}.png")
+    plt.savefig(out_path_3d, dpi=300, bbox_inches="tight")
     plt.close()
 #--------------------------------------------------
 
@@ -370,132 +370,183 @@ def analyze_results(result):
     sim_acc = result["sim_acc"]
     real_acc = result["real_acc"]
 
-    #vel RMSE
-    vel_mse  = np.mean((sim_vel - real_vel)**2, axis=0)
-    vel_rmse = np.sqrt(vel_mse)
+    #vel MAE (mean absolute error)
+    vel_abs_err = np.abs(sim_vel - real_vel)
+    vel_mae = np.mean(vel_abs_err, axis=0)
 
     #acc RMSE
     acc_mse  = np.mean((sim_acc - real_acc)**2, axis=0)
     acc_rmse = np.sqrt(acc_mse)
 
-    return vel_rmse, acc_rmse
+    return vel_mae, acc_rmse
 #--------------------------------------------------
-def plot_comparisons(metrics_dict):
+def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
+    """
+    1. Load + bin the bag once
+    2. For each model (zero-shot, knn, gp), run_simulation & compute RMSE
+    3. Save one NPZ containing:
+        - binned “physics” arrays: timestamps, positions, velocities,
+            accelerations, scaled_controls
+        - for each model: sim_pos_<m>, real_pos_<m>, sim_vel_<m>, real_vel_<m>,
+                        data_x_<m>, data_y_<m>, controls_<m>
+    4. Return dict: { model: (vel_rmse, acc_rmse) }
+    """
+    bag_name = os.path.splitext(os.path.basename(rosbag_path))[0]
+    os.makedirs(data_dir, exist_ok=True)
 
-    labels   = ['X','Y','Z','Roll','Pitch','Yaw']
-    models   = ['zero-shot','knn','gp']
+    # 1) Load + bin
+    df = load_rosbag(rosbag_path)
+    processed = process_data(df)
+
+    total_bins = processed['scaled_controls'].shape[0]
+    bins_for_sim = total_bins - 50
+    if bins_for_sim <= 10:
+        raise RuntimeError(f"Not enough bins in {rosbag_path} (got {total_bins=}) to drop last 50.")
+
+    # Truncate so all arrays align
+    timestamps = processed['timestamps'][: bins_for_sim + 1]        # (bins_for_sim+1,)
+    positions = processed['positions'][: bins_for_sim + 1]          # (bins_for_sim+1, 6)
+    velocities = processed['velocities'][: bins_for_sim + 1]        # (bins_for_sim+1, 6)
+    accelerations = processed['accelerations'][: bins_for_sim + 1]  # (bins_for_sim+1, 6)
+    scaled_controls = processed['scaled_controls'][: bins_for_sim]  # (bins_for_sim, 6)
+    steps = processed['steps'][: bins_for_sim]                      # (bins_for_sim,)
+
+    positions_zeroed = positions - positions[0:1, :]  # zero offset
+
+    models = ["zero-shot", "knn", "gp"]
+    metrics_per_model = {}
+
+    save_dict = {
+        "timestamps":      timestamps,
+        "positions":       positions,
+        "velocities":      velocities,
+        "accelerations":   accelerations,
+        "scaled_controls": scaled_controls
+    }
+    real_saved = False
+    for model in models:
+        # If KNN or GP, launch server first
+        if model in ("knn", "gp"):
+            env_path = "envs/res_inference/empty/brov_empty.x86_64"
+            srv = launch_server(model, dof)
+            time.sleep(3)
+        else:
+            env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
     
-    width  = 0.2  #
+        sim_out = run_simulation(
+            scaled_controls=scaled_controls,
+            dt_steps=steps,
+            pos=positions_zeroed,
+            vel=velocities,
+            accelerations=accelerations,
+            n_steps=bins_for_sim,
+            env_path=env_path,
+            sim_timestep=sim_timestep
+        )
 
-    for dof in (3, 6):
-        x = np.arange(len(labels))
+        vel_mae, acc_rmse = analyze_results(sim_out)
+        metrics_per_model[model] = (vel_mae, acc_rmse)
 
-        # --- RMSE for this DOF ---
-        fig, ax = plt.subplots(figsize=(8,4))
-        for i, model in enumerate(models):
-            rmse, _ = metrics_dict[(model, dof)]
-            ax.bar(x + i*width, rmse, width, label=model)
+        plot_name = f"{bag_name}_{dof}dof_{model}"
+        plot_all(
+            sim_out["controls"],    # (bins_for_sim-1, 6)
+            sim_out["sim_pos"],     # (bins_for_sim-1, 6)
+            sim_out["real_pos"],    # (bins_for_sim-1, 6)
+            sim_out["sim_vel"],     # (bins_for_sim-1, 6)
+            sim_out["real_vel"],    # (bins_for_sim-1, 6)
+            sim_out["data_y"],      # (bins_for_sim-1, 6) residuals
+            plot_name,
+            plot_dir
+        )
 
-        ax.set_xticks(x + width)
-        ax.set_xticklabels(labels)
-        ax.set_ylabel("RMSE velocity")
-        #ax.set_title(f"{dof}-DOF RMSE Comparison")
+        if not real_saved:
+            save_dict["real_pos"] = sim_out["real_pos"]    # (bins_for_sim-1, 6)
+            save_dict["real_vel"] = sim_out["real_vel"]    # (bins_for_sim-1, 6)
+            save_dict["real_acc"] = sim_out["real_acc"]    # (bins_for_sim-1, 6)
+            save_dict["controls"] = sim_out["controls"]
+            real_saved = True
 
-        ax.yaxis.set_major_locator(mticker.MaxNLocator(nbins=6, prune='both'))
-        ax.minorticks_on()
-        ax.grid(True,  which='major', axis='y',
-                linestyle='--', linewidth=0.5, color='grey', alpha=0.7)
-        ax.grid(True,  which='minor', axis='y',
-                linestyle=':',  linewidth=0.25, color='grey', alpha=0.5)
+        suffix = {
+            "zero-shot": "_zero_shot",
+            "knn":       "_knn",
+            "gp":        "_gp"
+        }[model]
 
-        ax.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0)
-        fig.tight_layout(rect=[0,0,0.85,1])
-        out_rmse = f"comparison_rmse_{dof}dof.png"
-        fig.savefig(out_rmse, dpi=300, bbox_inches='tight')
-        plt.close(fig)
-        print(f"saved {out_rmse}")
+        save_dict[f"sim_pos{suffix}"]  = sim_out["sim_pos"]
+        save_dict[f"sim_vel{suffix}"]  = sim_out["sim_vel"]
+        save_dict[f"sim_acc{suffix}"]  = sim_out["sim_acc"] 
+        save_dict[f"data_x{suffix}"]   = sim_out["data_x"]
+        save_dict[f"data_y{suffix}"]   = sim_out["data_y"]
 
-        # --- rmse acc for this DOF ---
-        fig2, ax2 = plt.subplots(figsize=(8,4))
-        for i, model in enumerate(models):
-            _, avg_res = metrics_dict[(model, dof)]
-            ax2.bar(x + i*width, np.abs(avg_res), width, label=model)
+        if model in ("knn", "gp"):
+            stop_server(srv)
+            srv.wait()
 
-        ax2.set_xticks(x + width)
-        ax2.set_xticklabels(labels)
-        ax2.set_ylabel("RMSE acceleration")
-        #ax2.set_title(f"{dof}-DOF Absolute Avg Residual Comparison")
+    dof_str = f"{dof}dof"
+    out_filename = f"{bag_name}_{dof_str}_data_all.npz"
+    out_path = os.path.join(data_dir, out_filename)
 
-        ax2.yaxis.set_major_locator(mticker.MaxNLocator(nbins=6, prune='both'))
-        ax2.minorticks_on()
-        ax2.grid(True,  which='major', axis='y',
-                linestyle='--', linewidth=0.5, color='grey', alpha=0.7)
-        ax2.grid(True,  which='minor', axis='y',
-                linestyle=':',  linewidth=0.25, color='grey', alpha=0.5)
+    np.savez_compressed(out_path, **save_dict)
+    print(f"[saved NPZ] {rosbag_path} → {out_path}")
 
-        ax2.legend(loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0)
-        fig2.tight_layout(rect=[0,0,0.85,1])
-        out_avgres = f"comparison_avgres_{dof}dof.png"
-        fig2.savefig(out_avgres, dpi=300, bbox_inches='tight')
-        plt.close(fig2)
-        print(f"saved {out_avgres}")
+    return metrics_per_model
+
 #--------------------------------------------------
+def plot_comparisons(metrics_across_bags, dof, dir):
 
-def runandanalyze(bag_paths, model, dof):
-    if model == "zero-shot":
-        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
-    else:
-        env_path = "envs/res_inference/empty/brov_empty.x86_64"
-    #segments = []  # list of (bag, start, end)
+    labels = ["X", "Y", "Z", "Roll", "Pitch", "Yaw"]
+    n_axes = 6
+    x = np.arange(n_axes)
+    width = 0.2
+    models = ["zero-shot", "knn", "gp"]
 
-    for bag in bag_paths:
+    # Compute per-model average across bags (stack over axis=0)
+    avg_vel = {}
+    avg_acc = {}
+    for model in models:
+        vel_list = [m[0] for m in metrics_across_bags[model]]
+        acc_list = [m[1] for m in metrics_across_bags[model]]
+        vel_stack = np.vstack(vel_list)  # (n_bags, 6)
+        acc_stack = np.vstack(acc_list)  # (n_bags, 6)
+        avg_vel[model] = np.mean(vel_stack, axis=0)  # (6,)
+        avg_acc[model] = np.mean(acc_stack, axis=0)  # (6,)
 
-        print(f"Processing: {bag}")
-        df = load_rosbag(bag)
-        data = process_data(df)
-        total_bins = data["scaled_controls"].shape[0]
-        #TODO check that this is only 1 bag and then delete for loop
-    
+    # --- Plot velocity MAE (6 axes) ---
+    fig, ax = plt.subplots(figsize=(10, 4))
+    for i, model in enumerate(models):
+        ax.bar(x + i*width, avg_vel[model], width, label=model)
+    ax.set_xticks(x + width)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Velocity MAE")
+    ax.grid(True, which="major", axis="y", linestyle="--", linewidth=0.5, color="grey", alpha=0.7)
+    ax.minorticks_on()
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    fig.tight_layout(rect=[0, 0, 0.85, 1])
 
-    bins = total_bins - 50
+    vel_fname = f"velocity_mae_{dof}dof.png"
+    path_vel = os.path.join(dir, vel_fname)
+    plt.savefig(path_vel, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+    print(f"[saved plot] {vel_fname}")
 
-    pos_seg  = data["positions"]        [0:bins+1]
-    vel_seg  = data["velocities"]       [0:bins+1]
-    acc_seg  = data["accelerations"]    [0:bins+1]
-    ctrl_seg = data["scaled_controls"]  [0:bins]
-    step_seg = data["steps"]            [0:bins]
+    # --- Plot acceleration RMSE (6 axes) ---
+    fig2, ax2 = plt.subplots(figsize=(10, 4))
+    for i, model in enumerate(models):
+        ax2.bar(x + i*width, avg_acc[model], width, label=model)
+    ax2.set_xticks(x + width)
+    ax2.set_xticklabels(labels)
+    ax2.set_ylabel("Acceleration RMSE")
+    ax2.grid(True, which="major", axis="y", linestyle="--", linewidth=0.5, color="grey", alpha=0.7)
+    ax2.minorticks_on()
+    ax2.legend(loc="upper left", bbox_to_anchor=(1.02, 1), borderaxespad=0)
+    fig2.tight_layout(rect=[0, 0, 0.85, 1])
 
-    pos_seg  = pos_seg - pos_seg[0]
-
-    result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, bins, env_path)
-
-    name = "results_" + model + "_" + str(dof) + "-dof"
-
-    plot_all(
-        result["controls"],
-        result["sim_pos"],
-        result["real_pos"],
-        result["sim_vel"],
-        result["real_vel"],
-        result["data_y"],
-        name
-    )
-    rmse, avgres = analyze_results(result)
-
-    labels = ['X','Y','Z','Roll','Pitch','Yaw']
-
-    rmse_mean   = np.mean(np.vstack(rmse),   axis=0)
-    avgres_mean = np.mean(np.vstack(avgres), axis=0)
-
-    metrics_fname = f"{model}{dof}dof_metrics.txt"
-    with open(metrics_fname, 'w') as f:
-        f.write("Axis," + ",".join(labels) + "\n")
-        f.write("RMSE," + ",".join(f"{v:.6f}" for v in rmse_mean) + "\n")
-        f.write("AvgResidual," + ",".join(f"{v:.6f}" for v in avgres_mean) + "\n")
-    print(f"saved aggregated metrics to {metrics_fname}")
-
-    return rmse_mean, avgres_mean
-#--------------------------------------
+    acc_fname = f"acceleration_rmse_{dof}dof.png"
+    path_acc = os.path.join(dir, acc_fname)
+    plt.savefig(path_acc, dpi=300, bbox_inches="tight")
+    plt.close(fig2)
+    print(f"[saved plot] {acc_fname}")
+#--------------------------------------------------
 
 def launch_server(model, dof, port="8000"):
     cmd = [sys.executable, "-m", "inference.fastserver", "--model", model, "--dof", str(dof), "--port", port]
@@ -515,35 +566,38 @@ def stop_server(proc, port=8000):
 #----------------------------Main------------------------------
 
 def main():
+    data_dir = "processed_data"
+    plot_dir = "plots"
+    os.makedirs(data_dir, exist_ok=True)
+
+    os.makedirs(plot_dir, exist_ok=True)
+    
     bag_dir = "training/ros2_bags/27-5"  # path bags
-    metrics = {}
-
-    bags_3dof = ["rosbag2_2025_05_27-11_57_50"]
     
+    bags_3dof = ["rosbag2_2025_05_27-11_57_50",
+                "rosbag2_2025_05_27-11_10_52_sync"]
+
+    bags_6dof = ["rosbag2_2025_05_27-12_04_31",
+                "rosbag2_2025_05_27-11_40_38",
+                "rosbag2_2025_05_27-11_46_03",
+                "rosbag2_2025_05_27-12_09_45"]
     
-    bags_6dof = ["rosbag2_2025_05_27-12_04_31"]
 
+    metrics = {
+        3: {"zero-shot": [], "knn": [], "gp": []},
+        6: {"zero-shot": [], "knn": [], "gp": []}
+    }
 
-    bag_paths3 = [os.path.join(bag_dir, b, f"{b}_0.db3") for b in bags_3dof]
-    bag_paths6 = [os.path.join(bag_dir, b, f"{b}_0.db3") for b in bags_6dof]
+    for dof, bag_list in ((3, bags_3dof), (6, bags_6dof)):
+        for bag_base in bag_list:
+            rosbag_path = os.path.join(bag_dir, bag_base, f"{bag_base}_0.db3")
+            model_metrics = process_and_save(rosbag_path, dof, data_dir, plot_dir)
+            # model_metrics is { model: (vel_rmse_array, acc_rmse_array) }, both shape (6,)
+            for model, (v_rmse, a_rmse) in model_metrics.items():
+                metrics[dof][model].append((v_rmse, a_rmse))
 
-    for bag_paths, dof in [(bag_paths3,3),(bag_paths6,6)]:
-    # zero-shot first half
-        rmse0, avg0 = runandanalyze(bag_paths, "zero-shot", dof)
-        metrics[("zero-shot",dof)] = (rmse0, avg0)
-
-        for model in ("knn","gp"):
-            #TODO Check that new model actually load.
-
-            srv = launch_server(model, dof); time.sleep(3)
-            r, a = runandanalyze(bag_paths, model, dof)
-            stop_server(srv)
-            srv.wait()
-            
-            #srv.terminate(); srv.wait(5)
-            metrics[(model,dof)] = (r, a)
-
-        plot_comparisons(metrics)
+        # After collecting all bags of this DOF, plot RMSE
+        plot_comparisons(metrics[dof], dof, plot_dir)
 
 if __name__ == "__main__":
     main()

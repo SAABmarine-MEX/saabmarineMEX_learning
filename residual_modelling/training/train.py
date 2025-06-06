@@ -23,11 +23,13 @@ def main():
 
     # 2. Set up directories
     data_dir = "training/data/"
-    data_folder = "data4/" # TODO: add data dir as parser option
+    data_folder = "data5_unchunked/" # TODO: add data dir as parser option
     train_data_dir = data_dir + data_folder + "train/"
     eval_data_dir  = data_dir + data_folder + "eval/"
     results_dir = create_results_dir()  # Creates unique timestamped directory
 
+    elbo_dir = "lossplots"
+    os.makedirs(elbo_dir, exist_ok=True)
 
     # 3. Train process
     for comp in ["3dof", "6dof"]:
@@ -56,6 +58,9 @@ def main():
                             print(f"Training SVGP for output index {i}...")
                             model = model_factory(m_type)#, output_index=i)
                             model.fit(inputs=train_data_x, targets=train_data_y[:, i])
+
+                            elbo = os.path.join(elbo_dir, f"elbo_axis{i}")
+                            model.plot_loss(elbo)
 
                             print("Saving model...")
                             file_name = f"{m_type}_{comp}_output_{i}"
@@ -89,8 +94,6 @@ def create_results_dir():
     return results_dir
 
 
-
-
 def model_factory(name, **kwargs):
     if name == "knn":
         return KNN(**kwargs)
@@ -108,7 +111,6 @@ def load_data(data_dir, complexity):
     data_x = data["x"]
     data_y = data["y"]
     return data_x, data_y
-
 
 
 
