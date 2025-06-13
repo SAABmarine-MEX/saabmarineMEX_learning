@@ -8,6 +8,7 @@ from gpytorch.kernels import MaternKernel, ScaleKernel, GaussianSymmetrizedKLKer
 from gpytorch.likelihoods import GaussianLikelihood
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.mlls import VariationalELBO, PredictiveLogLikelihood, ExactMarginalLogLikelihood
+from gpytorch.constraints import GreaterThan
 import gpytorch.settings
 from .convergence import ExpMAStoppingCriterion
 #from gp_mapping.convergence import ExpMAStoppingCriterion
@@ -45,7 +46,7 @@ class SVGP(VariationalGP):
         self.scaler = None
         
         # likelihood
-        self.likelihood = GaussianLikelihood()
+        self.likelihood = GaussianLikelihood(noise_constraint=GreaterThan(0.3)) #noise constraint to not overfit
 
         # hardware allocation
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -59,7 +60,7 @@ class SVGP(VariationalGP):
 
     #def fit(self, inputs, targets, covariances=None, n_samples=5000, max_iter=10000,
     #        learning_rate=1e-3, rtol=1e-4, n_window=100, auto=True, verbose=True):
-    def fit(self, inputs, targets, covariances=None, n_samples=1000, max_iter=1000,
+    def fit(self, inputs, targets, covariances=None, n_samples=5000, max_iter=2000,
             learning_rate=1e-1, rtol=1e-12, n_window=200, auto=False, verbose=True):
         '''
         Optimises the hyperparameters of the GP kernel and likelihood.
@@ -107,7 +108,6 @@ class SVGP(VariationalGP):
 
             # randomly sample from the dataset
             idx = np.random.choice(inputs_scaled.shape[0], n, replace=False)
-
 
             ## UI covariance
             if covariances is None or covariances.shape[1] == 18:
@@ -330,6 +330,7 @@ class SVGP(VariationalGP):
 
         return gp, scaler
 
+#Only used for eval in training TODO: use def sample instead and delete this
     def predict(self, tx):
         '''
         Predicts the output for the given input tx.

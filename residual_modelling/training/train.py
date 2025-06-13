@@ -9,7 +9,7 @@ from training.methods.svgp.gp import SVGP
 
 
 def main():
-    # 1. Option parser
+    # parser
     parser = OptionParser()
     parser.add_option("-m", "--model", dest="model",
                 default="all", help="Model type: 'knn', 'mtgp', 'svgp', or 'all'")
@@ -21,17 +21,17 @@ def main():
     complexity = options.complexity
     print("Selected model type:", model_type)
 
-    # 2. Set up directories
+    # directories
     data_dir = "training/data/"
-    data_folder = "data5_unchunked/" # TODO: add data dir as parser option
+    data_folder = "data9_tet/" # TODO: add data dir as parser option
     train_data_dir = data_dir + data_folder + "train/"
     eval_data_dir  = data_dir + data_folder + "eval/"
-    results_dir = create_results_dir()  # Creates unique timestamped directory
+    results_dir = create_results_dir()  # timestamped directory TODO make parser option
 
-    elbo_dir = "lossplots"
+    elbo_dir = "data_and_plots/lossplots_tet"
     os.makedirs(elbo_dir, exist_ok=True)
 
-    # 3. Train process
+    # train process
     for comp in ["3dof", "6dof"]:
         if complexity == "all" or complexity == comp:
             print(f"Training for complexity: {comp}")
@@ -59,7 +59,7 @@ def main():
                             model = model_factory(m_type)#, output_index=i)
                             model.fit(inputs=train_data_x, targets=train_data_y[:, i])
 
-                            elbo = os.path.join(elbo_dir, f"elbo_axis{i}")
+                            elbo = os.path.join(elbo_dir, f"elbo_axis{i}_{comp}")
                             model.plot_loss(elbo)
 
                             print("Saving model...")
@@ -83,13 +83,14 @@ def main():
                         yhat = model.predict(data_x=eval_data_x)
                         rmse = np.sqrt(np.mean((yhat - eval_data_y)**2))
                         print(f"RMSE on evaluation data: {rmse:.4f}")
-
-                        # TODO: add plots
+                        if m_type =="mtgp":
+                            mt_elbo = os.path.join(elbo_dir, f"elbo_axis_{comp}_{m_type}")
+                            model.plot_loss(mt_elbo)
 
 
 def create_results_dir():
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    results_dir = f"training/results/{timestamp}/"
+    results_dir = f"training/results/tet/{timestamp}/"
 
     return results_dir
 
@@ -111,7 +112,6 @@ def load_data(data_dir, complexity):
     data_x = data["x"]
     data_y = data["y"]
     return data_x, data_y
-
 
 
 if __name__ == "__main__":
