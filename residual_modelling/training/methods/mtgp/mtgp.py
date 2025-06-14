@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import gpytorch
 from sklearn.preprocessing import StandardScaler
@@ -19,7 +20,11 @@ class MTGP(gpytorch.models.ExactGP):
         
         self.covar_module = gpytorch.kernels.MultitaskKernel(
             gpytorch.kernels.RBFKernel(), num_tasks=num_tasks, rank=1)
+        
+        self.scaler = StandardScaler()
+        self.likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=num_tasks)
 
+        self.device = torch.device('cpu')
         # num_tasks = train_y.shape[1]
         # super().__init__(train_x, train_y, likelihood)
         # D = train_x.shape[1]
@@ -45,12 +50,13 @@ class MTGP(gpytorch.models.ExactGP):
 
     def predict(self, data_x):
         # Predict with the model
-        X_scaled = self.sclr.transform(data_x)
-        tx = torch.tensor(X_scaled, dtype=torch.float32)
-        self.eval(); self.lh.eval()
+        x_scaled = self.scaler.transform(data_x)
+        x_t = torch.from_numpy(x_scaled).to(self.device).float()
+        self.eval(); self.likelihood.eval()
         with torch.no_grad(), gpytorch.settings.fast_pred_var():
-            yhat = self.likelihood(self(tx)).mean.cpu().numpy()
-        return yhat
+            y_dist = self.likelihood(self(x_t))
+            y = y_dist.mean.cpu().detach().numpy()
+        return y
 
 
     def save(self, path):
@@ -59,22 +65,16 @@ class MTGP(gpytorch.models.ExactGP):
         # Save the model state
         checkpoint = {
             "model_state": self.state_dict(), 
-            # "likelihood_state": self.likelihood.state_dict(),
-            "likelihood_state": self.lh.state_dict(),
-            # "scaler_mean": self.scaler.mean_,
-            # "scaler_scale": self.scaler.scale_,
-            # "num_tasks": self.likelihood.num_tasks,
-            "scaler_mean": self.sclr.mean_,
-            "scaler_scale": self.sclr.scale_,
-            "num_tasks": self.lh.num_tasks,
+            "likelihood_state": self.likelihood.state_dict(),
+            "scaler_mean": self.scaler.mean_,
+            "scaler_scale": self.scaler.scale_,
+            #"num_tasks": self.likelihood.num_tasks,
         }
         torch.save(checkpoint, path)
 
 
-    def fit(self, data_x, data_y, lr=0.01, iters=300, w=np.array([1]*6 +[1]*6 + [1]*6, dtype=np.float32)):
+    def fit(self, data_x, data_y, lr=0.1, iters=500, w=np.array([1]*6 +[1]*6+[1]*6, dtype=np.float32)):
         # Override the dummy data
-        #tx = torch.tensor(data_x, dtype=torch.float32)
-        #ty = torch.tensor(data_y, dtype=torch.float32)
 
         #scalar
         scaler = StandardScaler().fit(data_x)
@@ -84,95 +84,62 @@ class MTGP(gpytorch.models.ExactGP):
         tx = torch.tensor(data_x_scaled, dtype=torch.float32)
         ty = torch.tensor(data_y, dtype=torch.float32)
 
-        # Override the dummy data
         self.set_train_data(inputs=tx, targets=ty, strict=False)
 
 
         likelihood = gpytorch.likelihoods.MultitaskGaussianLikelihood(num_tasks=data_y.shape[1])
 
-        #reduced noise
-        #y_var = torch.var(ty, dim=0)
-        #likelihood.noise = y_var.mean().item() * 0.01 
-
         self.train()
         likelihood.train()
-
+        
         optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, self)
 
+        self.loss = list()
         for i in range(iters):
+
             optimizer.zero_grad()
             output = self(tx)
             loss = -mll(output, ty)
             loss.backward()
             optimizer.step()
-            #print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}') 
+
+            self.loss.append(loss.item())
+
+            print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}') 
 
         self.eval(); likelihood.eval()
-        self.sclr = scaler  # Store the scaler in the model for later use
-        self.lh = likelihood  # Store the likelihood in the model
+        self.scaler = scaler  # Store the scaler in the model for later use
+        self.likelihood = likelihood  # Store the likelihood in the model
 
-        return self, likelihood, scaler # TODO: remove ideally
+    def plot_loss(self, fname):
 
-    def tune_gp(self, X_train, y_train, X_val, y_val, lr_list=(1e-2, 1e-1, 5e-1), iters_list=(200, 500, 800)):
-        # tune learning rate and optimizer steps
-        best_rmse   = np.inf
-        best_params = None
+        # plot
+        fig, ax = plt.subplots(1)
+        ax.plot(self.loss, 'k-')
 
-        for lr in lr_list:
-            for n_iters in iters_list:
-                # train on training split
-                model, likelihood, scaler = self.fit(
-                    X_train, y_train, lr=lr, iters = n_iters
-                )
-                # predict on val split
-                Xs = scaler.transform(X_val)
-                tx = torch.tensor(Xs, dtype=torch.float32)
-                model.eval(); likelihood.eval()
-                with torch.no_grad(), gpytorch.settings.fast_pred_var():
-                    yhat = likelihood(model(tx)).mean.cpu().numpy()
+        # format
+        ax.set_xlabel('Iteration')
+        ax.set_ylabel('ELBO')
+        ax.set_yscale('log')
+        plt.tight_layout()
 
-                rmse = np.sqrt(np.mean((yhat - y_val)**2))
-                print(f"  lr={lr:.2e}, iters={n_iters} → RMSE={rmse:.4f}")
-                if rmse < best_rmse:
-                    best_rmse   = rmse
-                    best_params = (lr, n_iters)
+        # save
+        fig.savefig(fname, bbox_inches='tight', dpi=1000)
 
-        lr_opt, iters_opt = best_params
-        print(f"Best GP params: lr={lr_opt:.2e}, iters={iters_opt}, val_RMSE={best_rmse:.4f}")
+    @classmethod
+    def load(cls, fname):
+        chk = torch.load(fname, map_location="cpu")
+        
+        gp = cls()
+        gp.load_state_dict(chk["model_state"])
+        gp.eval()
+        gp.likelihood.eval()
 
-        #Re-train final on the entire training set
-        final_model, final_likelihood, final_scaler = self.fit(
-            X_train, y_train, lr=lr_opt, iters=iters_opt)
+        scaler = StandardScaler()
+        scaler.mean_ = chk["scaler_mean"]
+        scaler.scale_ = chk["scaler_scale"]
+        gp.scaler = scaler
 
-        #return final_model, final_likelihood, final_scaler
-
-
-    """
-    def fit2(self, train_x, train_y, likelihood, lr=0.01, iters=300):
-        # scalar
-        scaler = StandardScaler().fit(train_x)
-        train_x_scaled = scaler.transform(train_x)
-
-        tx = torch.tensor(train_x_scaled, dtype=torch.float32)
-        ty = torch.tensor(train_y, dtype=torch.float32)
-
-        self.train()
-        likelihood.train()
-
-        optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-        mll = gpytorch.mlls.ExactMarginalLogLikelihood(likelihood, self)
-
-        for i in range(iters):
-            optimizer.zero_grad()
-            output = self(tx)
-            loss = -mll(output, ty)
-            loss.backward()
-            optimizer.step()
-            # print(f'Iter {i+1}/{iters} - Loss: {loss.item():.3f}')
-
-        self.eval(); likelihood.eval()
-        return self, likelihood, scaler
-    """
-
+        return gp, scaler
 

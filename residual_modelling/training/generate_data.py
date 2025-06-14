@@ -3,6 +3,7 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
 
 
 from scipy.spatial.transform import Rotation as R
@@ -24,26 +25,21 @@ def main():
     #n_steps = 200
     data_x = []
     data_y = []
-
+    env_path = "envs/tether/1_2Cd/env_tether_1_2Cd.x86_64"
+    
     #bag_dir = "ros2_bags/brov_tank_bags2"
     bag_dir = "training/ros2_bags/27-5"
 
-    plotdir = "training_plots"
+    plotdir = "data_and_plots/training_plots_tet"
     os.makedirs(plotdir, exist_ok=True)
     
     # 3DOF bags
-    bags = ["rosbag2_2025_05_27-12_58_29",
+    bags3 = ["rosbag2_2025_05_27-12_58_29",
             "rosbag2_2025_05_27-11_34_13"]
-
-    #Only keyboard test
-    # bags =  [ 
-    #     "rosbag2_2025_05_14-16_33_33", #
-    #     "rosbag2_2025_05_14-17_12_31" #
-    # ]
 
     # Get the bag paths TODO: could make as function in py
     rosbag_paths = []
-    for name in bags:
+    for name in bags3:
         bag_folder = os.path.join(bag_dir, name)
         db3 = os.path.join(bag_folder, f"{name}_0.db3")
         if os.path.exists(db3):
@@ -97,7 +93,6 @@ def main():
         step_seg  = dt_steps[start : end]
 
         print("Running Unity simulation...")
-        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
         result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, end, env_path)
 
         # print(f"\nPlotting results for {rosbag_path}...\n")
@@ -118,62 +113,20 @@ def main():
     data3dof_x = np.vstack(data_x)
     data3dof_y = np.vstack(data_y)
 
-    """
-    # Split data into training and evaluation sets
-    num_samples = data_x.shape[0]
-    split_idx = int(0.8 * num_samples) # 80% for training, 20% for evaluation
-
-    # Split while preserving order
-    train_x = data_x[:split_idx]
-    train_y = data_y[:split_idx]
-
-    eval_x = data_x[split_idx:]
-    eval_y = data_y[split_idx:]
-
-
-    # Setup directories for saving data
-    folder_path = "data/data3/"
-    train_dir = os.path.join(folder_path, "train/")
-    eval_dir = os.path.join(folder_path, "eval/")
-
-    os.makedirs(folder_path, exist_ok=True)
-    os.makedirs(train_dir, exist_ok=True)
-    os.makedirs(eval_dir, exist_ok=True)
-
-    # Save the processed data
-    # Save training data
-    np.savez(train_dir + "data3dof.npz", x=train_x, y=train_y)
-    # Save evaluation data
-    np.savez(eval_dir + "data3dof.npz", x=eval_x, y=eval_y)
-    """
-
-
     #-----------------------------6DOF-------------------------------------------
     data_x = []
     data_y = []
     # wanted bags
     # 6dof bags
-    #check length total
 
-    # bags =  [ 
-    #     "rosbag2_2025_05_14-17_20_40" #
-    # ]
-    bags = [
+    bags6 = [
         "rosbag2_2025_05_27-12_54_51",
         "rosbag2_2025_05_27-11_51_32",
         "rosbag2_2025_05_27-13_04_58"
     ]
 
-
-    # bags = [
-    #     "rosbag2_2025_05_15-13_30_38", #
-    #     "rosbag2_2025_05_14-17_41_18",
-    #     "rosbag2_2025_05_14-17_20_40",  #
-    #     "rosbag2_2025_05_14-17_26_50"
-    #     ]
-    
     rosbag_paths2 = []
-    for name in bags:
+    for name in bags6:
         bag_folder = os.path.join(bag_dir, name)
         db3 = os.path.join(bag_folder, f"{name}_0.db3")
         if os.path.exists(db3):
@@ -200,7 +153,6 @@ def main():
 
         total_bins = scaled_ctrls.shape[0]
 
-        
 
         start = 0
         end   = total_bins - 50
@@ -212,24 +164,28 @@ def main():
         step_seg  = dt_steps[start : end]
 
         print("Running Unity simulation...")
-        env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
-        result = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, end, env_path)
+        result6 = run_simulation(ctrl_seg, step_seg, pos_seg, vel_seg, acc_seg, end, env_path)
 
         # print(f"\nPlotting results for {rosbag_path}...\n")
         plot_all(
-            result["controls"],
-            result["sim_pos"],
-            result["real_pos"],
-            result["sim_vel"],
-            result["real_vel"],
-            result["data_y"],
+            result6["controls"],
+            result6["sim_pos"],
+            result6["real_pos"],
+            result6["sim_vel"],
+            result6["real_vel"],
+            result6["data_y"],
             "trainingplot_6dof_" + str(bagnr),
             plotdir
         )
+        
+        data_x.append(result["data_x"])
+        data_y.append(result["data_y"])
 
-    data6dof_x = np.vstack(result["data_x"])
-    data6dof_y = np.vstack(result["data_y"])
+    data6dof_x = np.vstack(data_x)
+    data6dof_y = np.vstack(data_y)
 
+    print(len(data3dof_x))
+    print(len(data6dof_x))
 
     # Split and save the data
     # Trim both to the minimum length
@@ -252,7 +208,7 @@ def main():
     train6dof_y, eval6dof_y = data6dof_y[:split_idx], data6dof_y[split_idx:]
 
     # Setup directories for saving data
-    folder_path = "training/data/data5_unchunked/"
+    folder_path = "training/data/data9_tet/"
     train_dir = os.path.join(folder_path, "train/")
     eval_dir = os.path.join(folder_path, "eval/")
 
@@ -291,12 +247,6 @@ def main():
     # Save the README
     with open(os.path.join(folder_path, 'README.txt'), 'w') as f:
         f.write(readme_text)
-
-
-
-
-
-
 
 
 def get_rosbag_paths(parent_folder):
@@ -365,7 +315,7 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
 
     return df
 
-def process_data(df, bin_size=0.2, sim_timestep=0.02):
+def process_data(df, bin_size=0.1, sim_timestep=0.1):
 
     # Extract raw data
     pos = df[['x', 'y', 'z']].values
@@ -434,7 +384,6 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
     agg_controls   = np.vstack(agg_ctrl)
     agg_velocities = np.vstack(agg_vel)
     agg_timestamps = np.array(agg_ts)
-    #agg_velocities[3], agg_velocities[4] = agg_velocities[4], agg_velocities[3]
 
     # Compute true dt between bins (in seconds)
     dt = np.diff(agg_timestamps, prepend=agg_timestamps[0]) / 1e9
@@ -444,7 +393,6 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
     steps = np.full(len(dt), int(round(bin_size / sim_timestep)), dtype=int)
     #print(steps)
     # Compute accelerations from velocities
-    # accel[i] = (vel[i] - vel[i-1]) / dt[i]
     acc = np.diff(agg_velocities, axis=0) / dt[1:, None]
     # Prepend first accel to match length
     acc = np.vstack([acc[0], acc])
@@ -467,7 +415,8 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir
     num_dofs = 6
     timesteps = actions.shape[0]
 
-    x_axis = np.linspace(0, 100, timesteps)  #Race progress (%)
+    #x_axis = np.linspace(0, 100, timesteps)  #Race progress (%)
+    x_axis = np.arange(timesteps) * 0.1
 
     fig, axs = plt.subplots(3, num_dofs, figsize=(20, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
@@ -508,7 +457,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir
         for j in range(3):
             axs[j, i].grid(True)
             if j == 2:
-                axs[j, i].set_xlabel("Race Progress [%]")
+                axs[j, i].set_xlabel("Time [s]")
 
     # Add legend
     axs[1, 0].legend(loc='upper right', fontsize='small')
@@ -533,7 +482,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir
     # plt.show()
 
 
-def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.02):
+def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.1):
     data_x, data_y = [], []
     sim_pos = []
     sim_vel = []
@@ -561,9 +510,14 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
         action = ActionTuple(continuous=np.array([current_control]))
 
         # Step the simulation for the full duration
-        for _ in range(2):
+        #timestart = time.perf_counter()
+
+        for _ in range(1):
             env_sim.set_actions(behavior_name, action)
             env_sim.step()
+
+        #timeend = time.perf_counter()
+        #print(f"Sim step = {timeend - timestart:.6f} seconds")
 
         # Get observation *after* simulation steps are completed
         sim_steps, _ = env_sim.get_steps(behavior_name)
@@ -574,11 +528,11 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
             sim_vel_s = sim_obs[7:13]  # ned [vx, vy, vz, wx, wy, wz]
             sim_vel_s[3], sim_vel_s[4] = sim_vel_s[4], sim_vel_s[3], 
 
-            qs = np.array(sim_rot_q)  # OBS CHECK order = [x, y, z, w]
+            qs = np.array(sim_rot_q)
             rotations = R.from_quat(qs)
             euler = rotations.as_euler('xyz', degrees=False)
             sim_rot = np.unwrap(euler)
-            #OBS CHECK AXES
+
 
             sim_dt = sim_timestep * num_sim_steps
             sim_acc_s = (sim_vel_s - prev_sim_vel) / sim_dt
@@ -587,9 +541,7 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
             
             if step > 0:
                 force_rescale = real_acc_s - sim_acc_s # Acc diff
-                # for i in range(len(force_rescale)):
-                #     print(f"\nAction {i+1}: Rescale = {force_rescale[i]:.6f}")
-                
+
                 # Input: sim vel + acc + control | Output: force rescale (acc diff, real-sim)
                 sim_pos.append(np.concatenate([sim_pos_s, sim_rot]))
                 sim_vel.append(sim_vel_s)
@@ -602,6 +554,7 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
                 data_y.append(force_rescale)
 
             prev_sim_vel = sim_vel_s.copy()
+            
     env_sim.close()
 
     return {

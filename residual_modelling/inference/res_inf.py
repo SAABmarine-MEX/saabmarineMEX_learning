@@ -103,7 +103,7 @@ def load_rosbag(rosbag_path, synced_topic="/synced_pose_control"):
 
     return df
 #------------------------------
-def process_data(df, bin_size=0.2, sim_timestep=0.02):
+def process_data(df, bin_size=0.1, sim_timestep=0.1):
 
     # Extract raw data
     pos = df[['x', 'y', 'z']].values
@@ -184,8 +184,6 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
 
     steps = np.full(len(dt), int(round(bin_size / sim_timestep)), dtype=int)
     #print(steps)
-    # Compute accelerations from velocities
-    # accel[i] = (vel[i] - vel[i-1]) / dt[i]
     acc = np.diff(agg_velocities, axis=0) / dt[1:, None]
     # Prepend first accel to match length
     acc = np.vstack([acc[0], acc])
@@ -203,7 +201,7 @@ def process_data(df, bin_size=0.2, sim_timestep=0.02):
 
 #--------------------------------------
 
-def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.02):
+def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, env_path, sim_timestep=0.1):
     data_x, data_y = [], []
     sim_pos = []
     sim_vel = []
@@ -231,9 +229,12 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
         action = ActionTuple(continuous=np.array([current_control]))
 
         # Step the simulation for the full duration
-        for _ in range(2):
+        #timestart = time.perf_counter()
+        for _ in range(1):
             env_sim.set_actions(behavior_name, action)
             env_sim.step()
+        #timeend = time.perf_counter()
+        #print(f"Sim step = {timeend - timestart:.6f} seconds")
 
         # Get observation *after* simulation steps are completed
         sim_steps, _ = env_sim.get_steps(behavior_name)
@@ -269,12 +270,12 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
                 real_acc.append(real_acc_s)
                 rc.append(current_control)
 
-                data_x.append(np.concatenate([sim_vel_s, sim_acc_s, current_control]))
+                data_x.append(np.concatenate([sim_vel_s, current_control]))
                 data_y.append(force_rescale)
 
             prev_sim_vel = sim_vel_s.copy()
     env_sim.close()
-
+    print(len(rc))
     return {
         "data_x": np.array(data_x),
         "data_y": np.array(data_y),
@@ -295,7 +296,7 @@ def plot_all(actions, sim_pos, real_pos, sim_vel, real_vel, residuals, name, dir
     timesteps = actions.shape[0]
 
     #x_axis = np.linspace(0, 100, timesteps)  #Race progress (%)
-    x_axis = np.arange(timesteps) * 0.2
+    x_axis = np.arange(timesteps) * 0.1
 
     fig, axs = plt.subplots(3, num_dofs, figsize=(20, 10), sharex=True)
     fig.subplots_adjust(hspace=0.3)
@@ -380,7 +381,7 @@ def analyze_results(result):
 
     return vel_mae, acc_rmse
 #--------------------------------------------------
-def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
+def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.1 ):
     """
     1. Load + bin the bag once
     2. For each model (zero-shot, knn, gp), run_simulation & compute RMSE
@@ -394,7 +395,7 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
     bag_name = os.path.splitext(os.path.basename(rosbag_path))[0]
     os.makedirs(data_dir, exist_ok=True)
 
-    # 1) Load + bin
+    # load
     df = load_rosbag(rosbag_path)
     processed = process_data(df)
 
@@ -403,7 +404,7 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
     if bins_for_sim <= 10:
         raise RuntimeError(f"Not enough bins in {rosbag_path} (got {total_bins=}) to drop last 50.")
 
-    # Truncate so all arrays align
+    # array align
     timestamps = processed['timestamps'][: bins_for_sim + 1]        # (bins_for_sim+1,)
     positions = processed['positions'][: bins_for_sim + 1]          # (bins_for_sim+1, 6)
     velocities = processed['velocities'][: bins_for_sim + 1]        # (bins_for_sim+1, 6)
@@ -413,7 +414,7 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
 
     positions_zeroed = positions - positions[0:1, :]  # zero offset
 
-    models = ["zero-shot", "knn", "gp"]
+    models = ["zero-shot", "knn", "mtgp", "svgp"]
     metrics_per_model = {}
 
     save_dict = {
@@ -426,12 +427,12 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
     real_saved = False
     for model in models:
         # If KNN or GP, launch server first
-        if model in ("knn", "gp"):
-            env_path = "envs/res_inference/empty/brov_empty.x86_64"
+        if model in ("knn", "mtgp", "svgp"):
+            env_path = "envs/res_inference/empty/10m_2cmB/env.x86_64"
             srv = launch_server(model, dof)
-            time.sleep(3)
+            time.sleep(5)
         else:
-            env_path = "envs/sitl_envs/v5/prior/prior.x86_64"
+            env_path = "envs/sitl_envs/v6_10m_bouancy/2cmB/env.x86_64"
     
         sim_out = run_simulation(
             scaled_controls=scaled_controls,
@@ -443,7 +444,7 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
             env_path=env_path,
             sim_timestep=sim_timestep
         )
-
+        #input()
         vel_mae, acc_rmse = analyze_results(sim_out)
         metrics_per_model[model] = (vel_mae, acc_rmse)
 
@@ -469,7 +470,8 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
         suffix = {
             "zero-shot": "_zero_shot",
             "knn":       "_knn",
-            "gp":        "_gp"
+            "mtgp":        "_mtgp",
+            "svgp":        "_svgp"
         }[model]
 
         save_dict[f"sim_pos{suffix}"]  = sim_out["sim_pos"]
@@ -478,7 +480,7 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.02 ):
         save_dict[f"data_x{suffix}"]   = sim_out["data_x"]
         save_dict[f"data_y{suffix}"]   = sim_out["data_y"]
 
-        if model in ("knn", "gp"):
+        if model in ("knn", "mtgp", "svgp"):
             stop_server(srv)
             srv.wait()
 
@@ -498,7 +500,7 @@ def plot_comparisons(metrics_across_bags, dof, dir):
     n_axes = 6
     x = np.arange(n_axes)
     width = 0.2
-    models = ["zero-shot", "knn", "gp"]
+    models = ["zero-shot", "knn", "mtgp", "svgp"]
 
     # Compute per-model average across bags (stack over axis=0)
     avg_vel = {}
@@ -554,22 +556,21 @@ def launch_server(model, dof, port="8000"):
         "gnome-terminal",
         "--",
         "bash", "-lc",
-        " ".join(cmd)
+        " ".join(cmd)# + "; exec bash"
     ],preexec_fn=os.setsid)
 
 def stop_server(proc, port=8000):
     # kill
     pgid = os.getpgid(proc.pid)
     os.killpg(pgid, signal.SIGTERM)
-    subprocess.run(["fuser", "-k", f"{port}/tcp"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(["fuser", "-k", "-TERM", f"{port}/tcp"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 #----------------------------Main------------------------------
 
 def main():
-    data_dir = "processed_data"
-    plot_dir = "plots"
+    data_dir = "data_and_plots/dictfiles_plot_tet"
+    plot_dir = "data_and_plots/plots_inf_tet"
     os.makedirs(data_dir, exist_ok=True)
-
     os.makedirs(plot_dir, exist_ok=True)
     
     bag_dir = "training/ros2_bags/27-5"  # path bags
@@ -581,11 +582,10 @@ def main():
                 "rosbag2_2025_05_27-11_40_38",
                 "rosbag2_2025_05_27-11_46_03",
                 "rosbag2_2025_05_27-12_09_45"]
-    
 
     metrics = {
-        3: {"zero-shot": [], "knn": [], "gp": []},
-        6: {"zero-shot": [], "knn": [], "gp": []}
+        3: {"zero-shot": [], "knn": [], "mtgp": [], "svgp": []},
+        6: {"zero-shot": [], "knn": [], "mtgp": [], "svgp": []}
     }
 
     for dof, bag_list in ((3, bags_3dof), (6, bags_6dof)):
