@@ -1,0 +1,47 @@
+{
+    "Brov": {
+        "checkpoints": [
+            {
+                "steps": 380944,
+                "file_path": "results/test_simple/Brov/Brov-380944.onnx",
+                "reward": 9174.955963134766,
+                "creation_time": 1749035814.5188031,
+                "auxillary_file_paths": [
+                    "results/test_simple/Brov/Brov-380944.pt"
+                ]
+            },
+            {
+                "steps": 380944,
+                "file_path": "results/test_simple/Brov/Brov-380944.onnx",
+                "reward": null,
+                "creation_time": 1749035954.7965305,
+                "auxillary_file_paths": [
+                    "results/test_simple/Brov/Brov-380944.pt"
+                ]
+            },
+            {
+                "steps": 471398,
+                "file_path": "results/test_simple/Brov/Brov-471398.onnx",
+                "reward": null,
+                "creation_time": 1749036041.2272654,
+                "auxillary_file_paths": [
+                    "results/test_simple/Brov/Brov-471398.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 471398,
+            "file_path": "results/test_simple/Brov.onnx",
+            "reward": null,
+            "creation_time": 1749036041.2272654,
+            "auxillary_file_paths": [
+                "results/test_simple/Brov/Brov-471398.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

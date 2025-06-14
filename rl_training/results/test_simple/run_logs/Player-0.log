@@ -1,0 +1,170 @@
+The selected window backend is x11 
+Mono path[0] = '/home/albin/mex/DRL-Python/rl_training/builds/env_simple_Data/Managed'
+Mono config path = '/home/albin/mex/DRL-Python/rl_training/builds/env_simple_Data/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.0.37f1 (090b7797214c)
+[Subsystems] Discovering subsystems at path /home/albin/mex/DRL-Python/rl_training/builds/env_simple_Data/UnitySubsystems
+Forcing GfxDevice: Null
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+NullGfxDevice:
+    Version:  NULL 1.0 [1.0]
+    Renderer: Null Device
+    Vendor:   Unity Technologies
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.049 seconds
+- Finished resetting the current domain, in  0.001 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+ERROR: Shader Sprites/Default shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader Sprites/Mask shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader Legacy Shaders/VertexLit shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+ERROR: Shader FX/Water shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+WARNING: Shader Unsupported: 'Standard' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+ERROR: Shader Standard shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+WARNING: Shader Unsupported: 'Standard' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+ERROR: Shader Unlit/Transparent shader is not supported on this GPU (none of subshaders/fallbacks are suitable)
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (2)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (2)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent (1)') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+The referenced script on this Behaviour (Game Object 'BrovAgent') is missing!
+UnloadTime: 0.348204 ms
+DllNotFoundException: libdl.so assembly:<unknown assembly> type:<unknown type> member:(null)
+  at (wrapper managed-to-native) Assimp.Unmanaged.UnmanagedLibrary+UnmanagedLinuxLibraryImplementation.dlopen(string,int)
+  at Assimp.Unmanaged.UnmanagedLibrary+UnmanagedLinuxLibraryImplementation.NativeLoadLibrary (System.String path) [0x00000] in <d40f2b0ad6814d4c8094142d8473733f>:0 
+  at Assimp.Unmanaged.UnmanagedLibrary+UnmanagedLibraryImplementation.LoadLibrary (System.String path) [0x00008] in <d40f2b0ad6814d4c8094142d8473733f>:0 
+  at Assimp.Unmanaged.UnmanagedLibrary.LoadLibrary (System.String libPath) [0x0002d] in <d40f2b0ad6814d4c8094142d8473733f>:0 
+  at Assimp.Unmanaged.UnmanagedLibrary.LoadLibrary () [0x00012] in <d40f2b0ad6814d4c8094142d8473733f>:0 
+  at Assimp.AssimpUnity.InitializePlugin () [0x00206] in <1d91137e819c411980755d1ae6f0ebdd>:0 
+
+Registered Communicator in Agent.
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'map' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Found 'Checkpoints' GameObject!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+Publisher for topic /tf registered twice!
+Checking: Agents
+Checking: map
+Found 'map' GameObject!
+Parent of map is: EnvSimple
+map found
+Publisher for topic /brov/sim/odometry registered twice!
+requesting resize 84 x 84
+Unable to save timers to file /home/albin/mex/DRL-Python/rl_training/builds/env_simple_Data/ML-Agents/Timers/TankRL_timers.json
+[Physics::Module] Cleanup current backned.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
