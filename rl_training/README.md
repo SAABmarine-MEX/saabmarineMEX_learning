@@ -1,3 +1,18 @@
+# RL Training
+
+The rl training utilizes Unity Machine Learning Agents Toolkit (ML-Agents). This is used in the Unity simulation to create environment builds that the training..  Here on the training side of things, we utilize their python packages 
+
+## Folder Structure
+```
+.
+├── builds/ (containts the environment builds from the simulation*)
+├── config/ (contains the training configuration yaml files)
+└── results/ (contains the results from the training)
+```
+*More about the simulation can be found in [SAABmarine-MEX](https://github.com/SAABmarine-MEX).
+
+# Installation
+
 # How to train
 
 `mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-identifier>`
