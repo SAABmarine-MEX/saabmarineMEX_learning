@@ -115,7 +115,7 @@ xvfb-run -a mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-
 
 
 ## Usefull GCP stuff
-Install GCP SDK to get "gcloud"
+Install GCP SDK to get "gcloud".
 
 ### Connect
 
