@@ -4,7 +4,7 @@ The rl training utilizes [Unity Machine Learning Agents Toolkit (ML-Agents)](htt
 ## Folder Structure
 ```
 .
-├── builds/ (containts the environment builds from the simulation)
+├── builds/ (contains the environment builds from the simulation)
 ├── config/ (contains the training configuration yaml files)
 └── results/ (contains the results from the training)
 ```
