@@ -1,25 +1,23 @@
 # RL Training
-
-The rl training utilizes Unity Machine Learning Agents Toolkit (ML-Agents). This is used in the Unity simulation to create environment builds that the training..  Here on the training side of things, we utilize their python packages 
-
+The rl training utilizes [Unity Machine Learning Agents Toolkit (ML-Agents)](https://github.com/Unity-Technologies/ml-agents/blob/develop/docs/ML-Agents-Overview.md). This is used in the Unity simulation to create environment builds (more about the simulation can be found in [SAABmarine-MEX](https://github.com/SAABmarine-MEX)). These builds are then used here on the training side of things.
 ## Folder Structure
 ```
 .
-├── builds/ (containts the environment builds from the simulation*)
+├── builds/ (containts the environment builds from the simulation)
 ├── config/ (contains the training configuration yaml files)
 └── results/ (contains the results from the training)
 ```
-*More about the simulation can be found in [SAABmarine-MEX](https://github.com/SAABmarine-MEX).
 
-# Installation
+## Installation
 
-# How to train
+
+## How to train
 
 `mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-identifier>`
 
 Pass `--no-graphics` to run training without graphics. This will increase the efficiency of the training since scene rendering is not needed. It can also be directly added into the behavior file. See `config/Brov.yaml` for example.
 
-Your `<trainer-config-file>` is found in `config/` and `<env_name>` is found in `envs/`
+Your `<trainer-config-file>` is found in `config/` and `<env_name>` is found in `envs/`.
 
 ## Training Using Concurrent Unity Instances
 "In order to run concurrent Unity instances during training, set the number of environment instances using the command line option `--num-envs=<n>` when you invoke `mlagents-learn`. Optionally, you can also set the --base-port, which is the starting port used for the concurrent Unity instances.", https://github.com/Unity-Technologies/ml-agents/blob/develop/docs/Training-ML-Agents.md. 
