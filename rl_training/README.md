@@ -39,6 +39,8 @@ python -m pip install ./ml-agents
 mlagents-learn --help
 ```
 
+If troubles with installation, this video is good: https://www.youtube.com/watch?v=bT3SV1SLqHA.
+
 ### Google Cloud Platform (GCP) VM installation
 As most of the work of this project was done with an Ubuntu laptop without CUDA GPU, a GCP VM was create in order to give better training performance for the RL. If new to working with gcp instances from local machine, check out [Usefull GCP stuff](#Usefull-GCP-stuff).
 
