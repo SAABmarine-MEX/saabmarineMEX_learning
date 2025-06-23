@@ -40,9 +40,9 @@ mlagents-learn --help
 ```
 
 ### Google Cloud Platform (GCP) VM installation
-As most of the work of this project was done with a laptop without CUDA GPU, a GCP VM was create in order to give better training performance for the RL.
+As most of the work of this project was done with an Ubuntu laptop without CUDA GPU, a GCP VM was create in order to give better training performance for the RL.
 
-Optional: Local machine if you want to use a pre-emptible instance 
+Optional: Local machine if you want to use a pre-emptible instance. `shutdownscript.sh` is found in this repo.
 ```
 gcloud compute instances add-metadata mlagents-preemptible \
   --zone=europe-west1-b \
@@ -88,33 +88,39 @@ tensorboard --logdir results --bind_all
 ```
 
 ## How to train
-
-`mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-identifier>`
+Now that the installation is complete, it is time to train! This is the command (and is true for both local and VM use):
+```
+mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-identifier>
+```
 
 Pass `--no-graphics` to run training without graphics. This will increase the efficiency of the training since scene rendering is not needed. It can also be directly added into the behavior file. See `config/Brov.yaml` for example.
 
-Your `<trainer-config-file>` is found in `config/` and `<env_name>` is found in `envs/`.
+Your `<trainer-config-file>` is found in `config/` and `<env_name>` is found in `builds/`. If you run this locally and don't want to use env build and instead connect directly to Unity, just run the training command without `--env=<env_name>` and then press the play button of your scene in Unity.
 
-## Training Using Concurrent Unity Instances
-"In order to run concurrent Unity instances during training, set the number of environment instances using the command line option `--num-envs=<n>` when you invoke `mlagents-learn`. Optionally, you can also set the --base-port, which is the starting port used for the concurrent Unity instances.", https://github.com/Unity-Technologies/ml-agents/blob/develop/docs/Training-ML-Agents.md. 
+### Training Using Concurrent Unity Instances
+"In order to run concurrent Unity instances during training, set the number of environment instances using the command line option `--num-envs=<n>` when you invoke `mlagents-learn`. Optionally, you can also set the --base-port, which is the starting port used for the concurrent Unity instances.", [learn more about the `mlagents-learn` here](https://github.com/Unity-Technologies/ml-agents/blob/develop/docs/Training-ML-Agents.md). 
 
-# GCP stuff
+### Important to now when training in the VM
+You have two options for running the training command in VM. The first one (not tested but should work) is that you build your env using Linux Server build + Mono in Unity. This makes it headless. The second option (tested and work) is to do the env build as a normal Linux build but then do this extra stuff in the VM:
+
+Installation:
+```
+sudo apt install -y libgl1 libglib2.0-0 libnss3 libxrandr2 libxcursor1 libxinerama1 libxi6 libasound2 libpulse0
+sudo apt install -y xvfb
+```
+Training command:
+```
+xvfb-run -a mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-identifier> --no-graphics
+```
+
+
+## Usefull GCP stuff
+Install GCP SDK to get "gcloud"
 
 ## Connect
 
-gcloud compute ssh mlagents-preemptible
+`gcloud compute ssh mlagents-preemptible`
 
 ## Copy files from local machine
 
- gcloud compute scp --recurse ~/mex/DRL-Python/rl_training/builds/* mlagents-preemptible:/home/albin/workspace/builds --zone=europe-west1-b
-
-
-## To run on GCP 
-
-This commands are ran in the terminal of the GCP instance.
-
-`sudo apt install -y libgl1 libglib2.0-0 libnss3 libxrandr2 libxcursor1 libxinerama1 libxi6 libasound2 libpulse0`
-
-`sudo apt install -y xvfb`
-
- xvfb-run -a mlagents-learn config/Brov.yaml --env=builds/env_simple.x86_64 --run-id=simple_test1 --no-graphics
+`gcloud compute scp --recurse ~/mex/DRL-Python/rl_training/builds/* mlagents-preemptible:/home/albin/workspace/builds --zone=europe-west1-b`
