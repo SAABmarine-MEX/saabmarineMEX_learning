@@ -117,10 +117,18 @@ xvfb-run -a mlagents-learn <trainer-config-file> --env=<env_name> --run-id=<run-
 ## Usefull GCP stuff
 Install GCP SDK to get "gcloud"
 
-## Connect
+### Connect
 
-`gcloud compute ssh mlagents-preemptible`
+```
+gcloud compute ssh mlagents-preemptible
+```
 
-## Copy files from local machine
-
-`gcloud compute scp --recurse ~/mex/DRL-Python/rl_training/builds/* mlagents-preemptible:/home/albin/workspace/builds --zone=europe-west1-b`
+### Copy files from local machine to VM
+Examples:
+```
+gcloud compute scp --recurse ~/mex/DRL-Python/rl_training/builds/* mlagents-preemptible:/home/albin/workspace/builds --zone=europe-west1-b
+```
+and to copy from VM to local:
+```
+gcloud compute scp --recurse mlagents-preemptible:/home/mart_kartasev/results/move_ppo_03_const ~/Workspace/ABB-Warehouse/results --zone=europe-west1-b
+```
