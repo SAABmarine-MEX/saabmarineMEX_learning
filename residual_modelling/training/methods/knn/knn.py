@@ -31,15 +31,14 @@ class KNN:
             pickle.dump(self.pipeline, f)
 
 
-    def tune_knn(self, X_train, y_train, X_val, y_val, w):
+    def tune_knn(self, X_train, y_train, X_val, y_val):
         best_rmse = np.inf
         best_cfg  = None
 
-        for k in range(3,11):
+        for k in range(3,21):
             for p in (1,2):
                 knn = Pipeline([
                     ("scaler", StandardScaler()),
-                    ("weight", w),
                     ("knn",    KNeighborsRegressor(n_neighbors=k, p=p, weights="uniform"))
                 ])
                 knn.fit(X_train, y_train)
@@ -51,14 +50,14 @@ class KNN:
 
         print(f"Best (k,p)={best_cfg} with RMSE={best_rmse:.4f}")
 
-        k_opt, p_opt = best_cfg
-        final_knn = Pipeline([
-            ("scaler", StandardScaler()),
-            ("knn",    KNeighborsRegressor(
-                        n_neighbors=k_opt,
-                        p=p_opt,
-                        weights="uniform"))
-                            ])
-        final_knn.fit(X_train, y_train)
-        self.pipeline = final_knn
+        # k_opt, p_opt = best_cfg
+        # final_knn = Pipeline([
+        #     ("scaler", StandardScaler()),
+        #     ("knn",    KNeighborsRegressor(
+        #                 n_neighbors=k_opt,
+        #                 p=p_opt,
+        #                 weights="uniform"))
+        #                     ])
+        # final_knn.fit(X_train, y_train)
+        # self.pipeline = final_knn
 

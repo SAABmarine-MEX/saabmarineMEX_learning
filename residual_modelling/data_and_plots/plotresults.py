@@ -6,30 +6,27 @@ from matplotlib.ticker import MaxNLocator, FormatStrFormatter
 from typing import Dict, List, Optional
 
 def main():
-    npz_path = "processed_data/rosbag2_2025_05_27-11_46_03_0_6dof_data_all.npz"
+    data_dir = "data_and_plots/dictfiles_plot_tet"
     axes = ["X", "Y", "Z", "Roll", "Pitch", "Yaw"]
-    # Load data
-    data = load_dict(npz_path)
-    data_dir = "processed_data/"
 
 
     models = ["zero-shot","knn","mtgp","svgp"]
     #summarize_metrics_by_model("processed_data", axes, models)
     #summarize_model_improvements("processed_data", axes, models)
-    summarize_combined_metrics("processed_data", axes, models)
-    # for npz_path in glob.glob(os.path.join(data_dir, "*.npz")):
-    #     bag_name = os.path.splitext(os.path.basename(npz_path))[0]
-    #     data = load_dict(npz_path)
-    #     # now call your plotting functions, e.g.:
-    #     plot_vel_time_series(
-    #         data,
-    #         out_dir="report_plots/vel",
-    #         bag_name=bag_name,
-    #         axis_labels=axes,
-    #         #models=['zero-shot','knn','mtgp','svgp'],
-    #         #title=bag_name
-    #     )
-    #     # now call your plotting functions, e.g.:
+    #summarize_combined_metrics("processed_data", axes, models)
+    for npz_path in glob.glob(os.path.join(data_dir, "*.npz")):
+        bag_name = os.path.splitext(os.path.basename(npz_path))[0]
+        data = load_dict(npz_path)
+    
+        plot_vel_time_series(
+            data,
+            out_dir="data_and_plots/comparison_plots_tet/vel",
+            bag_name=bag_name,
+            axis_labels=axes,
+            #models=['zero-shot','knn','mtgp','svgp'],
+            #title=bag_name
+        )
+    # 
     #     # plot_vel_time_series(
     #     #     data,
     #     #     out_dir="report_plots/vel/short",
@@ -40,23 +37,23 @@ def main():
     #     #     #models=['zero-shot','knn','mtgp','svgp'],
     #     #     #title=bag_name
     #     # )
-    #     #Plot acceleration RMSE
-    #     plot_acc_rmse(
-    #         data,
-    #         out_dir="report_plots/comp/rmse",
-    #         bag_name=bag_name,
-    #         axis_labels=axes
-    #         #title="Acceleration RMSE per Axis"
-    #     )
+        #Plot acceleration RMSE
+        plot_acc_rmse(
+            data,
+            out_dir="data_and_plots/comparison_plots_tet/comp/rmse",
+            bag_name=bag_name,
+            axis_labels=axes
+            #title="Acceleration RMSE per Axis"
+        )
 
-    #     #Plot velocity MAE
-    #     plot_vel_mae(
-    #         data,
-    #         out_dir="report_plots/comp/mae",
-    #         bag_name=bag_name,
-    #         axis_labels=axes
-    #         #title="Velocity MAE per Axis"
-    #     )
+        #Plot velocity MAE
+        plot_vel_mae(
+            data,
+            out_dir="data_and_plots/comparison_plots_tet/comp/mae",
+            bag_name=bag_name,
+            axis_labels=axes
+            #title="Velocity MAE per Axis"
+        )
 
     # Plot change in position error over time
     # plot_pos_error_delta(
@@ -111,10 +108,6 @@ def load_dict(npz_path: str) -> Dict[str, np.ndarray]:
             )
 
     return data_dict
-
-# Example usage:
-# data = load_dict('path/to/bag_6dof_data_all.npz')
-# print(data.keys())
 
 def plot_acc_rmse(
     data: Dict[str, np.ndarray],
@@ -190,13 +183,6 @@ def plot_vel_mae(
         axis_labels: List of labels for each axis. Defaults to ['axis 0', ..., 'axis N'].
         models: List of model names to include. Defaults to ['zero-shot', 'knn', 'mtgp', 'svgp'].
         title: Optional title for the plot. If None, a generic title is used.
-
-    Example:
-        >>> from data_utils import load_saved_bag_data
-        >>> from plot_utils import plot_vel_mae
-        >>> data = load_saved_bag_data('bag_6dof_data_all.npz')
-        >>> plot_vel_mae(data, axis_labels=['x','y','z','roll','pitch','yaw'],
-        ...              title='Bag 1 Velocity MAE')
     """
     os.makedirs(out_dir, exist_ok=True)
     if models is None:

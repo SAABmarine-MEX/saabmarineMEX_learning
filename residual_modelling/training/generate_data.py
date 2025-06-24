@@ -25,11 +25,10 @@ def main():
     #n_steps = 200
     data_x = []
     data_y = []
-    env_path = "envs/tether/1_2Cd/env_tether_1_2Cd.x86_64"
+    env_path = "envs/tether/3m_1-5Cd_novattenyta/env.x86_64"
     
     #bag_dir = "ros2_bags/brov_tank_bags2"
     bag_dir = "training/ros2_bags/27-5"
-
     plotdir = "data_and_plots/training_plots_tet"
     os.makedirs(plotdir, exist_ok=True)
     
@@ -554,7 +553,7 @@ def run_simulation(scaled_controls, dt_steps, pos, vel, accelerations, n_steps, 
                 data_y.append(force_rescale)
 
             prev_sim_vel = sim_vel_s.copy()
-            
+
     env_sim.close()
 
     return {

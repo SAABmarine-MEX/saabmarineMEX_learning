@@ -61,7 +61,7 @@ weight = np.array([1]*6 + [1]*6, dtype=np.float32)
 # -------------------------------------
 def load_all(model_choice, dof_choice):
     global knn_model, mtgp_model ,svgp_models, likelihood, mtgp_scaler, svgp_scaler, _model_choice, _dof_choice, weight
-    dir = "training/results/tet/2025-06-13_06-58-19" #OBS: change with new model folder
+    dir = "training/results/tet/2025-06-17_16-19-02" #OBS: change with new model folder
     _model_choice = model_choice
     _dof_choice = dof_choice
 

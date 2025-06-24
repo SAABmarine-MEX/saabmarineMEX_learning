@@ -428,11 +428,11 @@ def process_and_save(rosbag_path, dof, data_dir, plot_dir, sim_timestep=0.1 ):
     for model in models:
         # If KNN or GP, launch server first
         if model in ("knn", "mtgp", "svgp"):
-            env_path = "envs/res_inference/empty/10m_2cmB/env.x86_64"
+            env_path = "envs/res_inference/empty/tether/3m_1-5Cd_novattenyta/env.x86_64"
             srv = launch_server(model, dof)
             time.sleep(5)
         else:
-            env_path = "envs/sitl_envs/v6_10m_bouancy/2cmB/env.x86_64"
+            env_path = "envs/tether/3m_1-5Cd_novattenyta/env.x86_64"
     
         sim_out = run_simulation(
             scaled_controls=scaled_controls,

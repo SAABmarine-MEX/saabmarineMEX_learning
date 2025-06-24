@@ -86,6 +86,8 @@ def main():
                         if m_type =="mtgp":
                             mt_elbo = os.path.join(elbo_dir, f"elbo_axis_{comp}_{m_type}")
                             model.plot_loss(mt_elbo)
+                        elif m_type =="knn":
+                            model.tune_knn(train_data_x, train_data_y, eval_data_x, eval_data_y)
 
 
 def create_results_dir():
