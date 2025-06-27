@@ -1,6 +1,8 @@
 # RL Training
 The rl training utilizes [Unity Machine Learning Agents Toolkit (ML-Agents)](https://github.com/Unity-Technologies/ml-agents/blob/develop/docs/ML-Agents-Overview.md). This is used in the Unity simulation to create environment builds (more about the simulation can be found in [SAABmarine-MEX](https://github.com/SAABmarine-MEX)). These builds are then used here on the training side of things.
 
+<img src="assets/sim-training.png"/>
+
 ## Folder Structure
 ```
 .
